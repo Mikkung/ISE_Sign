@@ -1,0 +1,70 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.6.2
+2 info using node@v24.11.1
+3 silly config load:file:C:\Program Files\nodejs\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\admin\OneDrive - Chulalongkorn University\Desktop\VS CODE\ISE_Sign\.npmrc
+5 silly config load:file:C:\Users\admin\.npmrc
+6 silly config load:file:C:\Users\admin\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm install nodemailer @types/nodemailer
+8 verbose argv "install" "nodemailer" "@types/nodemailer" "--cache" ".\\.npm-cache" "--no-audit" "--no-fund"
+9 verbose logfile logs-max:10 dir:C:\Users\admin\OneDrive - Chulalongkorn University\Desktop\VS CODE\ISE_Sign\.npm-cache\_logs\2026-07-17T09_40_29_928Z-
+10 verbose logfile C:\Users\admin\OneDrive - Chulalongkorn University\Desktop\VS CODE\ISE_Sign\.npm-cache\_logs\2026-07-17T09_40_29_928Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+13 silly idealTree buildDeps
+14 silly fetch manifest nodemailer@*
+15 silly packumentCache full:https://registry.npmjs.org/nodemailer cache-miss
+16 verbose shrinkwrap failed to load node_modules/.package-lock.json out of date, updated: node_modules
+17 http fetch GET 200 https://registry.npmjs.org/nodemailer 2088ms (cache miss)
+18 silly packumentCache full:https://registry.npmjs.org/nodemailer set size:undefined disposed:false
+19 silly fetch manifest @types/nodemailer@*
+20 silly packumentCache full:https://registry.npmjs.org/@types%2fnodemailer cache-miss
+21 http fetch GET 200 https://registry.npmjs.org/@types%2fnodemailer 316ms (cache miss)
+22 silly packumentCache full:https://registry.npmjs.org/@types%2fnodemailer set size:undefined disposed:false
+23 silly placeDep ROOT @types/nodemailer@8.0.1 OK for: ise-project-approval@0.1.0 want: *
+24 silly placeDep ROOT nodemailer@9.0.3 OK for: ise-project-approval@0.1.0 want: *
+25 silly fetch manifest @emnapi/runtime@^1.7.0
+26 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fruntime cache-miss
+27 http fetch GET 200 https://registry.npmjs.org/@emnapi%2fruntime 98ms (cache revalidated)
+28 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fruntime set size:118526 disposed:false
+29 silly placeDep ROOT @emnapi/runtime@1.11.2 OK for: @img/sharp-wasm32@0.34.5 want: ^1.7.0
+30 silly fetch manifest @emnapi/core@^1.7.1
+31 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fcore cache-miss
+32 http fetch GET 200 https://registry.npmjs.org/@emnapi%2fcore 103ms (cache revalidated)
+33 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fcore set size:117071 disposed:false
+34 silly placeDep ROOT @emnapi/core@1.11.2 OK for: @napi-rs/wasm-runtime@1.1.6 want: ^1.7.1
+35 silly fetch manifest @emnapi/wasi-threads@1.2.2
+36 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fwasi-threads cache-miss
+37 http fetch GET 200 https://registry.npmjs.org/@emnapi%2fwasi-threads 551ms (cache revalidated)
+38 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fwasi-threads set size:28580 disposed:false
+39 silly placeDep ROOT @emnapi/wasi-threads@1.2.2 REPLACE for: @emnapi/core@1.11.2 want: 1.2.2
+40 silly fetch manifest @emnapi/core@1.10.0
+41 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fcore cache-hit
+42 silly placeDep node_modules/@unrs/resolver-binding-wasm32-wasi @emnapi/core@1.10.0 OK for: @unrs/resolver-binding-wasm32-wasi@1.12.2 want: 1.10.0
+43 silly fetch manifest @emnapi/wasi-threads@1.2.1
+44 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fwasi-threads cache-hit
+45 silly placeDep node_modules/@unrs/resolver-binding-wasm32-wasi @emnapi/wasi-threads@1.2.1 OK for: @emnapi/core@1.10.0 want: 1.2.1
+46 silly reify mark retired [
+46 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@emnapi\\wasi-threads'
+46 silly reify ]
+47 silly reify moves {
+47 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@emnapi\\wasi-threads': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@emnapi\\.wasi-threads-znnXcHSp'
+47 silly reify }
+48 http cache nodemailer@https://registry.npmjs.org/nodemailer/-/nodemailer-9.0.3.tgz 0ms (cache hit)
+49 http cache @types/nodemailer@https://registry.npmjs.org/@types/nodemailer/-/nodemailer-8.0.1.tgz 0ms (cache hit)
+50 http cache @emnapi/wasi-threads@https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.2.tgz 0ms (cache hit)
+51 silly tarball no local data for nodemailer@https://registry.npmjs.org/nodemailer/-/nodemailer-9.0.3.tgz. Extracting by manifest.
+52 silly tarball no local data for @types/nodemailer@https://registry.npmjs.org/@types/nodemailer/-/nodemailer-8.0.1.tgz. Extracting by manifest.
+53 silly tarball no local data for @emnapi/wasi-threads@https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.2.tgz. Extracting by manifest.
+54 http fetch GET 200 https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.2.tgz 1109ms (cache miss)
+55 http fetch GET 200 https://registry.npmjs.org/nodemailer/-/nodemailer-9.0.3.tgz 1278ms (cache miss)
+56 http fetch GET 200 https://registry.npmjs.org/@types/nodemailer/-/nodemailer-8.0.1.tgz 1508ms (cache miss)
+57 silly ADD node_modules/nodemailer
+58 silly ADD node_modules/@types/nodemailer
+59 silly CHANGE node_modules/@emnapi/wasi-threads
+60 verbose cwd C:\Users\admin\OneDrive - Chulalongkorn University\Desktop\VS CODE\ISE_Sign
+61 verbose os Windows_NT 10.0.26200
+62 verbose node v24.11.1
+63 verbose npm  v11.6.2
+64 verbose exit 0
+65 info ok

@@ -1,0 +1,1091 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.6.2
+2 info using node@v24.11.1
+3 silly config load:file:C:\Program Files\nodejs\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\admin\OneDrive - Chulalongkorn University\Desktop\VS CODE\ISE_Sign\.npmrc
+5 silly config load:file:C:\Users\admin\.npmrc
+6 silly config load:file:C:\Users\admin\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm install
+8 verbose argv "install" "--cache" ".\\.npm-cache" "--no-audit" "--no-fund"
+9 verbose logfile logs-max:10 dir:C:\Users\admin\OneDrive - Chulalongkorn University\Desktop\VS CODE\ISE_Sign\.npm-cache\_logs\2026-07-17T09_18_43_530Z-
+10 verbose logfile C:\Users\admin\OneDrive - Chulalongkorn University\Desktop\VS CODE\ISE_Sign\.npm-cache\_logs\2026-07-17T09_18_43_530Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+13 silly idealTree buildDeps
+14 silly fetch manifest fsevents@~2.3.2
+15 silly packumentCache full:https://registry.npmjs.org/fsevents cache-miss
+16 http cache https://registry.npmjs.org/fsevents 81ms (cache hit)
+17 silly packumentCache full:https://registry.npmjs.org/fsevents set size:182472 disposed:false
+18 silly placeDep ROOT fsevents@2.3.3 OK for: chokidar@3.6.0 want: ~2.3.2
+19 silly fetch manifest @esbuild/aix-ppc64@0.21.5
+20 silly packumentCache full:https://registry.npmjs.org/@esbuild%2faix-ppc64 cache-miss
+21 http cache https://registry.npmjs.org/@esbuild%2faix-ppc64 54ms (cache hit)
+22 silly packumentCache full:https://registry.npmjs.org/@esbuild%2faix-ppc64 set size:65972 disposed:false
+23 silly fetch manifest @esbuild/android-arm@0.21.5
+24 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-arm cache-miss
+25 http cache https://registry.npmjs.org/@esbuild%2fandroid-arm 60ms (cache hit)
+26 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-arm set size:223400 disposed:false
+27 silly fetch manifest @esbuild/android-arm64@0.21.5
+28 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-arm64 cache-miss
+29 http cache https://registry.npmjs.org/@esbuild%2fandroid-arm64 65ms (cache hit)
+30 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-arm64 set size:202366 disposed:false
+31 silly fetch manifest @esbuild/android-x64@0.21.5
+32 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-x64 cache-miss
+33 http cache https://registry.npmjs.org/@esbuild%2fandroid-x64 64ms (cache hit)
+34 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fandroid-x64 set size:197200 disposed:false
+35 silly fetch manifest @esbuild/darwin-arm64@0.21.5
+36 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fdarwin-arm64 cache-miss
+37 http cache https://registry.npmjs.org/@esbuild%2fdarwin-arm64 56ms (cache hit)
+38 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fdarwin-arm64 set size:199630 disposed:false
+39 silly fetch manifest @esbuild/darwin-x64@0.21.5
+40 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fdarwin-x64 cache-miss
+41 http cache https://registry.npmjs.org/@esbuild%2fdarwin-x64 60ms (cache hit)
+42 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fdarwin-x64 set size:197848 disposed:false
+43 silly fetch manifest @esbuild/freebsd-arm64@0.21.5
+44 silly packumentCache full:https://registry.npmjs.org/@esbuild%2ffreebsd-arm64 cache-miss
+45 http cache https://registry.npmjs.org/@esbuild%2ffreebsd-arm64 56ms (cache hit)
+46 silly packumentCache full:https://registry.npmjs.org/@esbuild%2ffreebsd-arm64 set size:200534 disposed:false
+47 silly fetch manifest @esbuild/freebsd-x64@0.21.5
+48 silly packumentCache full:https://registry.npmjs.org/@esbuild%2ffreebsd-x64 cache-miss
+49 http cache https://registry.npmjs.org/@esbuild%2ffreebsd-x64 62ms (cache hit)
+50 silly packumentCache full:https://registry.npmjs.org/@esbuild%2ffreebsd-x64 set size:198734 disposed:false
+51 silly fetch manifest @esbuild/linux-arm@0.21.5
+52 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-arm cache-miss
+53 http cache https://registry.npmjs.org/@esbuild%2flinux-arm 53ms (cache hit)
+54 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-arm set size:196784 disposed:false
+55 silly fetch manifest @esbuild/linux-arm64@0.21.5
+56 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-arm64 cache-miss
+57 http cache https://registry.npmjs.org/@esbuild%2flinux-arm64 55ms (cache hit)
+58 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-arm64 set size:198939 disposed:false
+59 silly fetch manifest @esbuild/linux-ia32@0.21.5
+60 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-ia32 cache-miss
+61 http cache https://registry.npmjs.org/@esbuild%2flinux-ia32 69ms (cache hit)
+62 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-ia32 set size:197805 disposed:false
+63 silly fetch manifest @esbuild/linux-loong64@0.21.5
+64 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-loong64 cache-miss
+65 http cache https://registry.npmjs.org/@esbuild%2flinux-loong64 60ms (cache hit)
+66 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-loong64 set size:253896 disposed:false
+67 silly fetch manifest @esbuild/linux-mips64el@0.21.5
+68 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-mips64el cache-miss
+69 http cache https://registry.npmjs.org/@esbuild%2flinux-mips64el 54ms (cache hit)
+70 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-mips64el set size:202764 disposed:false
+71 silly fetch manifest @esbuild/linux-ppc64@0.21.5
+72 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-ppc64 cache-miss
+73 http cache https://registry.npmjs.org/@esbuild%2flinux-ppc64 59ms (cache hit)
+74 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-ppc64 set size:200994 disposed:false
+75 silly fetch manifest @esbuild/linux-riscv64@0.21.5
+76 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-riscv64 cache-miss
+77 http cache https://registry.npmjs.org/@esbuild%2flinux-riscv64 56ms (cache hit)
+78 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-riscv64 set size:200662 disposed:false
+79 silly fetch manifest @esbuild/linux-s390x@0.21.5
+80 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-s390x cache-miss
+81 http cache https://registry.npmjs.org/@esbuild%2flinux-s390x 56ms (cache hit)
+82 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-s390x set size:200463 disposed:false
+83 silly fetch manifest @esbuild/linux-x64@0.21.5
+84 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-x64 cache-miss
+85 http cache https://registry.npmjs.org/@esbuild%2flinux-x64 58ms (cache hit)
+86 silly packumentCache full:https://registry.npmjs.org/@esbuild%2flinux-x64 set size:197126 disposed:false
+87 silly fetch manifest @esbuild/netbsd-x64@0.21.5
+88 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fnetbsd-x64 cache-miss
+89 http cache https://registry.npmjs.org/@esbuild%2fnetbsd-x64 57ms (cache hit)
+90 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fnetbsd-x64 set size:195514 disposed:false
+91 silly fetch manifest @esbuild/openbsd-x64@0.21.5
+92 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fopenbsd-x64 cache-miss
+93 http cache https://registry.npmjs.org/@esbuild%2fopenbsd-x64 62ms (cache hit)
+94 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fopenbsd-x64 set size:198745 disposed:false
+95 silly fetch manifest @esbuild/sunos-x64@0.21.5
+96 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fsunos-x64 cache-miss
+97 http cache https://registry.npmjs.org/@esbuild%2fsunos-x64 55ms (cache hit)
+98 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fsunos-x64 set size:197370 disposed:false
+99 silly fetch manifest @esbuild/win32-arm64@0.21.5
+100 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fwin32-arm64 cache-miss
+101 http cache https://registry.npmjs.org/@esbuild%2fwin32-arm64 67ms (cache hit)
+102 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fwin32-arm64 set size:199171 disposed:false
+103 silly fetch manifest @esbuild/win32-ia32@0.21.5
+104 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fwin32-ia32 cache-miss
+105 http cache https://registry.npmjs.org/@esbuild%2fwin32-ia32 63ms (cache hit)
+106 silly packumentCache full:https://registry.npmjs.org/@esbuild%2fwin32-ia32 set size:198030 disposed:false
+107 silly placeDep ROOT @esbuild/aix-ppc64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+108 silly placeDep ROOT @esbuild/android-arm@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+109 silly placeDep ROOT @esbuild/android-arm64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+110 silly placeDep ROOT @esbuild/android-x64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+111 silly placeDep ROOT @esbuild/darwin-arm64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+112 silly placeDep ROOT @esbuild/darwin-x64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+113 silly placeDep ROOT @esbuild/freebsd-arm64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+114 silly placeDep ROOT @esbuild/freebsd-x64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+115 silly placeDep ROOT @esbuild/linux-arm@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+116 silly placeDep ROOT @esbuild/linux-arm64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+117 silly placeDep ROOT @esbuild/linux-ia32@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+118 silly placeDep ROOT @esbuild/linux-loong64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+119 silly placeDep ROOT @esbuild/linux-mips64el@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+120 silly placeDep ROOT @esbuild/linux-ppc64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+121 silly placeDep ROOT @esbuild/linux-riscv64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+122 silly placeDep ROOT @esbuild/linux-s390x@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+123 silly placeDep ROOT @esbuild/linux-x64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+124 silly placeDep ROOT @esbuild/netbsd-x64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+125 silly placeDep ROOT @esbuild/openbsd-x64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+126 silly placeDep ROOT @esbuild/sunos-x64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+127 silly placeDep ROOT @esbuild/win32-arm64@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+128 silly placeDep ROOT @esbuild/win32-ia32@0.21.5 OK for: esbuild@0.21.5 want: 0.21.5
+129 silly fetch manifest @next/swc-darwin-arm64@16.2.10
+130 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-darwin-arm64 cache-miss
+131 http fetch GET 200 https://registry.npmjs.org/@next%2fswc-darwin-arm64 1132ms (cache revalidated)
+132 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-darwin-arm64 set size:5412738 disposed:false
+133 silly fetch manifest @next/swc-darwin-x64@16.2.10
+134 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-darwin-x64 cache-miss
+135 http fetch GET 200 https://registry.npmjs.org/@next%2fswc-darwin-x64 1456ms (cache revalidated)
+136 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-darwin-x64 set size:5354320 disposed:false
+137 silly fetch manifest @next/swc-linux-arm64-gnu@16.2.10
+138 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-linux-arm64-gnu cache-miss
+139 http fetch GET 200 https://registry.npmjs.org/@next%2fswc-linux-arm64-gnu 872ms (cache revalidated)
+140 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-linux-arm64-gnu set size:5268045 disposed:false
+141 silly fetch manifest @next/swc-linux-arm64-musl@16.2.10
+142 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-linux-arm64-musl cache-miss
+143 http fetch GET 200 https://registry.npmjs.org/@next%2fswc-linux-arm64-musl 1679ms (cache revalidated)
+144 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-linux-arm64-musl set size:5286591 disposed:false
+145 silly fetch manifest @next/swc-linux-x64-gnu@16.2.10
+146 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-linux-x64-gnu cache-miss
+147 http fetch GET 200 https://registry.npmjs.org/@next%2fswc-linux-x64-gnu 136ms (cache revalidated)
+148 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-linux-x64-gnu set size:5464002 disposed:false
+149 silly fetch manifest @next/swc-linux-x64-musl@16.2.10
+150 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-linux-x64-musl cache-miss
+151 http fetch GET 200 https://registry.npmjs.org/@next%2fswc-linux-x64-musl 836ms (cache revalidated)
+152 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-linux-x64-musl set size:5219915 disposed:false
+153 silly fetch manifest @next/swc-win32-arm64-msvc@16.2.10
+154 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-win32-arm64-msvc cache-miss
+155 http fetch GET 200 https://registry.npmjs.org/@next%2fswc-win32-arm64-msvc 2232ms (cache revalidated)
+156 silly packumentCache full:https://registry.npmjs.org/@next%2fswc-win32-arm64-msvc set size:5249497 disposed:false
+157 silly placeDep ROOT @next/swc-darwin-arm64@16.2.10 OK for: next@16.2.10 want: 16.2.10
+158 silly placeDep ROOT @next/swc-darwin-x64@16.2.10 OK for: next@16.2.10 want: 16.2.10
+159 silly placeDep ROOT @next/swc-linux-arm64-gnu@16.2.10 OK for: next@16.2.10 want: 16.2.10
+160 silly placeDep ROOT @next/swc-linux-arm64-musl@16.2.10 OK for: next@16.2.10 want: 16.2.10
+161 silly placeDep ROOT @next/swc-linux-x64-gnu@16.2.10 OK for: next@16.2.10 want: 16.2.10
+162 silly placeDep ROOT @next/swc-linux-x64-musl@16.2.10 OK for: next@16.2.10 want: 16.2.10
+163 silly placeDep ROOT @next/swc-win32-arm64-msvc@16.2.10 OK for: next@16.2.10 want: 16.2.10
+164 silly fetch manifest @rollup/rollup-darwin-arm64@4.62.2
+165 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-darwin-arm64 cache-miss
+166 http cache https://registry.npmjs.org/@rollup%2frollup-darwin-arm64 64ms (cache hit)
+167 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-darwin-arm64 set size:347013 disposed:false
+168 silly fetch manifest @rollup/rollup-android-arm64@4.62.2
+169 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-android-arm64 cache-miss
+170 http cache https://registry.npmjs.org/@rollup%2frollup-android-arm64 62ms (cache hit)
+171 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-android-arm64 set size:348555 disposed:false
+172 silly fetch manifest @rollup/rollup-win32-arm64-msvc@4.62.2
+173 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-win32-arm64-msvc cache-miss
+174 http cache https://registry.npmjs.org/@rollup%2frollup-win32-arm64-msvc 106ms (cache hit)
+175 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-win32-arm64-msvc set size:352045 disposed:false
+176 silly fetch manifest @rollup/rollup-freebsd-arm64@4.62.2
+177 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-freebsd-arm64 cache-miss
+178 http cache https://registry.npmjs.org/@rollup%2frollup-freebsd-arm64 69ms (cache hit)
+179 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-freebsd-arm64 set size:196758 disposed:false
+180 silly fetch manifest @rollup/rollup-linux-arm64-gnu@4.62.2
+181 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-arm64-gnu cache-miss
+182 http cache https://registry.npmjs.org/@rollup%2frollup-linux-arm64-gnu 70ms (cache hit)
+183 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-arm64-gnu set size:354340 disposed:false
+184 silly fetch manifest @rollup/rollup-linux-arm64-musl@4.62.2
+185 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-arm64-musl cache-miss
+186 http cache https://registry.npmjs.org/@rollup%2frollup-linux-arm64-musl 62ms (cache hit)
+187 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-arm64-musl set size:309760 disposed:false
+188 silly fetch manifest @rollup/rollup-android-arm-eabi@4.62.2
+189 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-android-arm-eabi cache-miss
+190 http cache https://registry.npmjs.org/@rollup%2frollup-android-arm-eabi 57ms (cache hit)
+191 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-android-arm-eabi set size:352055 disposed:false
+192 silly fetch manifest @rollup/rollup-linux-arm-gnueabihf@4.62.2
+193 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-arm-gnueabihf cache-miss
+194 http cache https://registry.npmjs.org/@rollup%2frollup-linux-arm-gnueabihf 59ms (cache hit)
+195 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-arm-gnueabihf set size:357969 disposed:false
+196 silly fetch manifest @rollup/rollup-linux-arm-musleabihf@4.62.2
+197 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-arm-musleabihf cache-miss
+198 http cache https://registry.npmjs.org/@rollup%2frollup-linux-arm-musleabihf 64ms (cache hit)
+199 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-arm-musleabihf set size:252175 disposed:false
+200 silly fetch manifest @rollup/rollup-win32-ia32-msvc@4.62.2
+201 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-win32-ia32-msvc cache-miss
+202 http cache https://registry.npmjs.org/@rollup%2frollup-win32-ia32-msvc 88ms (cache hit)
+203 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-win32-ia32-msvc set size:350519 disposed:false
+204 silly fetch manifest @rollup/rollup-linux-loong64-gnu@4.62.2
+205 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-loong64-gnu cache-miss
+206 http cache https://registry.npmjs.org/@rollup%2frollup-linux-loong64-gnu 65ms (cache hit)
+207 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-loong64-gnu set size:78884 disposed:false
+208 silly fetch manifest @rollup/rollup-linux-loong64-musl@4.62.2
+209 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-loong64-musl cache-miss
+210 http cache https://registry.npmjs.org/@rollup%2frollup-linux-loong64-musl 56ms (cache hit)
+211 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-loong64-musl set size:40918 disposed:false
+212 silly fetch manifest @rollup/rollup-linux-riscv64-gnu@4.62.2
+213 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-riscv64-gnu cache-miss
+214 http cache https://registry.npmjs.org/@rollup%2frollup-linux-riscv64-gnu 66ms (cache hit)
+215 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-riscv64-gnu set size:280570 disposed:false
+216 silly fetch manifest @rollup/rollup-linux-riscv64-musl@4.62.2
+217 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-riscv64-musl cache-miss
+218 http cache https://registry.npmjs.org/@rollup%2frollup-linux-riscv64-musl 58ms (cache hit)
+219 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-riscv64-musl set size:126584 disposed:false
+220 silly fetch manifest @rollup/rollup-linux-ppc64-gnu@4.62.2
+221 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-ppc64-gnu cache-miss
+222 http cache https://registry.npmjs.org/@rollup%2frollup-linux-ppc64-gnu 60ms (cache hit)
+223 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-ppc64-gnu set size:99023 disposed:false
+224 silly fetch manifest @rollup/rollup-linux-ppc64-musl@4.62.2
+225 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-ppc64-musl cache-miss
+226 http cache https://registry.npmjs.org/@rollup%2frollup-linux-ppc64-musl 52ms (cache hit)
+227 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-ppc64-musl set size:40580 disposed:false
+228 silly fetch manifest @rollup/rollup-linux-s390x-gnu@4.62.2
+229 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-s390x-gnu cache-miss
+230 http cache https://registry.npmjs.org/@rollup%2frollup-linux-s390x-gnu 62ms (cache hit)
+231 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-s390x-gnu set size:254191 disposed:false
+232 silly fetch manifest @rollup/rollup-darwin-x64@4.62.2
+233 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-darwin-x64 cache-miss
+234 http cache https://registry.npmjs.org/@rollup%2frollup-darwin-x64 60ms (cache hit)
+235 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-darwin-x64 set size:342135 disposed:false
+236 silly fetch manifest @rollup/rollup-freebsd-x64@4.62.2
+237 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-freebsd-x64 cache-miss
+238 http cache https://registry.npmjs.org/@rollup%2frollup-freebsd-x64 60ms (cache hit)
+239 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-freebsd-x64 set size:194771 disposed:false
+240 silly fetch manifest @rollup/rollup-linux-x64-gnu@4.62.2
+241 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-x64-gnu cache-miss
+242 http cache https://registry.npmjs.org/@rollup%2frollup-linux-x64-gnu 61ms (cache hit)
+243 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-x64-gnu set size:349401 disposed:false
+244 silly fetch manifest @rollup/rollup-linux-x64-musl@4.62.2
+245 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-x64-musl cache-miss
+246 http cache https://registry.npmjs.org/@rollup%2frollup-linux-x64-musl 65ms (cache hit)
+247 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-linux-x64-musl set size:348779 disposed:false
+248 silly fetch manifest @rollup/rollup-openbsd-x64@4.62.2
+249 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-openbsd-x64 cache-miss
+250 http cache https://registry.npmjs.org/@rollup%2frollup-openbsd-x64 78ms (cache hit)
+251 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-openbsd-x64 set size:39516 disposed:false
+252 silly fetch manifest @rollup/rollup-openharmony-arm64@4.62.2
+253 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-openharmony-arm64 cache-miss
+254 http cache https://registry.npmjs.org/@rollup%2frollup-openharmony-arm64 101ms (cache hit)
+255 silly packumentCache full:https://registry.npmjs.org/@rollup%2frollup-openharmony-arm64 set size:79697 disposed:false
+256 silly placeDep ROOT @rollup/rollup-android-arm-eabi@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+257 silly placeDep ROOT @rollup/rollup-android-arm64@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+258 silly placeDep ROOT @rollup/rollup-darwin-arm64@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+259 silly placeDep ROOT @rollup/rollup-darwin-x64@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+260 silly placeDep ROOT @rollup/rollup-freebsd-arm64@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+261 silly placeDep ROOT @rollup/rollup-freebsd-x64@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+262 silly placeDep ROOT @rollup/rollup-linux-arm-gnueabihf@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+263 silly placeDep ROOT @rollup/rollup-linux-arm-musleabihf@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+264 silly placeDep ROOT @rollup/rollup-linux-arm64-gnu@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+265 silly placeDep ROOT @rollup/rollup-linux-arm64-musl@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+266 silly placeDep ROOT @rollup/rollup-linux-loong64-gnu@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+267 silly placeDep ROOT @rollup/rollup-linux-loong64-musl@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+268 silly placeDep ROOT @rollup/rollup-linux-ppc64-gnu@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+269 silly placeDep ROOT @rollup/rollup-linux-ppc64-musl@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+270 silly placeDep ROOT @rollup/rollup-linux-riscv64-gnu@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+271 silly placeDep ROOT @rollup/rollup-linux-riscv64-musl@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+272 silly placeDep ROOT @rollup/rollup-linux-s390x-gnu@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+273 silly placeDep ROOT @rollup/rollup-linux-x64-gnu@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+274 silly placeDep ROOT @rollup/rollup-linux-x64-musl@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+275 silly placeDep ROOT @rollup/rollup-openbsd-x64@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+276 silly placeDep ROOT @rollup/rollup-openharmony-arm64@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+277 silly placeDep ROOT @rollup/rollup-win32-arm64-msvc@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+278 silly placeDep ROOT @rollup/rollup-win32-ia32-msvc@4.62.2 OK for: rollup@4.62.2 want: 4.62.2
+279 silly fetch manifest @img/sharp-darwin-arm64@0.34.5
+280 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-darwin-arm64 cache-miss
+281 http cache https://registry.npmjs.org/@img%2fsharp-darwin-arm64 101ms (cache hit)
+282 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-darwin-arm64 set size:105848 disposed:false
+283 silly fetch manifest @img/sharp-darwin-x64@0.34.5
+284 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-darwin-x64 cache-miss
+285 http cache https://registry.npmjs.org/@img%2fsharp-darwin-x64 100ms (cache hit)
+286 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-darwin-x64 set size:104467 disposed:false
+287 silly fetch manifest @img/sharp-libvips-darwin-arm64@1.2.4
+288 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-darwin-arm64 cache-miss
+289 http cache https://registry.npmjs.org/@img%2fsharp-libvips-darwin-arm64 79ms (cache hit)
+290 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-darwin-arm64 set size:83997 disposed:false
+291 silly fetch manifest @img/sharp-libvips-darwin-x64@1.2.4
+292 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-darwin-x64 cache-miss
+293 http cache https://registry.npmjs.org/@img%2fsharp-libvips-darwin-x64 85ms (cache hit)
+294 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-darwin-x64 set size:83096 disposed:false
+295 silly fetch manifest @img/sharp-libvips-linux-arm@1.2.4
+296 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-arm cache-miss
+297 http cache https://registry.npmjs.org/@img%2fsharp-libvips-linux-arm 98ms (cache hit)
+298 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-arm set size:90480 disposed:false
+299 silly fetch manifest @img/sharp-libvips-linux-arm64@1.2.4
+300 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-arm64 cache-miss
+301 http cache https://registry.npmjs.org/@img%2fsharp-libvips-linux-arm64 110ms (cache hit)
+302 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-arm64 set size:87554 disposed:false
+303 silly fetch manifest @img/sharp-libvips-linux-ppc64@1.2.4
+304 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-ppc64 cache-miss
+305 http cache https://registry.npmjs.org/@img%2fsharp-libvips-linux-ppc64 102ms (cache hit)
+306 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-ppc64 set size:72601 disposed:false
+307 silly fetch manifest @img/sharp-libvips-linux-riscv64@1.2.4
+308 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-riscv64 cache-miss
+309 http cache https://registry.npmjs.org/@img%2fsharp-libvips-linux-riscv64 91ms (cache hit)
+310 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-riscv64 set size:58803 disposed:false
+311 silly fetch manifest @img/sharp-libvips-linux-s390x@1.2.4
+312 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-s390x cache-miss
+313 http cache https://registry.npmjs.org/@img%2fsharp-libvips-linux-s390x 117ms (cache hit)
+314 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-s390x set size:81565 disposed:false
+315 silly fetch manifest @img/sharp-libvips-linux-x64@1.2.4
+316 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-x64 cache-miss
+317 http cache https://registry.npmjs.org/@img%2fsharp-libvips-linux-x64 109ms (cache hit)
+318 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linux-x64 set size:86327 disposed:false
+319 silly fetch manifest @img/sharp-libvips-linuxmusl-arm64@1.2.4
+320 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linuxmusl-arm64 cache-miss
+321 http cache https://registry.npmjs.org/@img%2fsharp-libvips-linuxmusl-arm64 104ms (cache hit)
+322 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linuxmusl-arm64 set size:86720 disposed:false
+323 silly fetch manifest @img/sharp-libvips-linuxmusl-x64@1.2.4
+324 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linuxmusl-x64 cache-miss
+325 http cache https://registry.npmjs.org/@img%2fsharp-libvips-linuxmusl-x64 92ms (cache hit)
+326 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-libvips-linuxmusl-x64 set size:83650 disposed:false
+327 silly fetch manifest @img/sharp-linux-arm@0.34.5
+328 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-arm cache-miss
+329 http cache https://registry.npmjs.org/@img%2fsharp-linux-arm 112ms (cache hit)
+330 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-arm set size:102715 disposed:false
+331 silly fetch manifest @img/sharp-linux-arm64@0.34.5
+332 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-arm64 cache-miss
+333 http cache https://registry.npmjs.org/@img%2fsharp-linux-arm64 116ms (cache hit)
+334 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-arm64 set size:103552 disposed:false
+335 silly fetch manifest @img/sharp-linux-ppc64@0.34.5
+336 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-ppc64 cache-miss
+337 http cache https://registry.npmjs.org/@img%2fsharp-linux-ppc64 100ms (cache hit)
+338 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-ppc64 set size:68168 disposed:false
+339 silly fetch manifest @img/sharp-linux-riscv64@0.34.5
+340 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-riscv64 cache-miss
+341 http cache https://registry.npmjs.org/@img%2fsharp-linux-riscv64 102ms (cache hit)
+342 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-riscv64 set size:45681 disposed:false
+343 silly fetch manifest @img/sharp-linux-s390x@0.34.5
+344 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-s390x cache-miss
+345 http cache https://registry.npmjs.org/@img%2fsharp-linux-s390x 123ms (cache hit)
+346 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-s390x set size:101430 disposed:false
+347 silly fetch manifest @img/sharp-linux-x64@0.34.5
+348 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-x64 cache-miss
+349 http cache https://registry.npmjs.org/@img%2fsharp-linux-x64 141ms (cache hit)
+350 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linux-x64 set size:102218 disposed:false
+351 silly fetch manifest @img/sharp-linuxmusl-arm64@0.34.5
+352 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linuxmusl-arm64 cache-miss
+353 http cache https://registry.npmjs.org/@img%2fsharp-linuxmusl-arm64 159ms (cache hit)
+354 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linuxmusl-arm64 set size:105157 disposed:false
+355 silly fetch manifest @img/sharp-linuxmusl-x64@0.34.5
+356 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linuxmusl-x64 cache-miss
+357 http cache https://registry.npmjs.org/@img%2fsharp-linuxmusl-x64 117ms (cache hit)
+358 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-linuxmusl-x64 set size:103818 disposed:false
+359 silly fetch manifest @img/sharp-wasm32@0.34.5
+360 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-wasm32 cache-miss
+361 http cache https://registry.npmjs.org/@img%2fsharp-wasm32 98ms (cache hit)
+362 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-wasm32 set size:99309 disposed:false
+363 silly fetch manifest @img/sharp-win32-arm64@0.34.5
+364 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-win32-arm64 cache-miss
+365 http cache https://registry.npmjs.org/@img%2fsharp-win32-arm64 123ms (cache hit)
+366 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-win32-arm64 set size:63462 disposed:false
+367 silly fetch manifest @img/sharp-win32-ia32@0.34.5
+368 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-win32-ia32 cache-miss
+369 http cache https://registry.npmjs.org/@img%2fsharp-win32-ia32 109ms (cache hit)
+370 silly packumentCache full:https://registry.npmjs.org/@img%2fsharp-win32-ia32 set size:104482 disposed:false
+371 silly placeDep ROOT @img/sharp-darwin-arm64@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+372 silly placeDep ROOT @img/sharp-darwin-x64@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+373 silly placeDep ROOT @img/sharp-libvips-darwin-arm64@1.2.4 OK for: sharp@0.34.5 want: 1.2.4
+374 silly placeDep ROOT @img/sharp-libvips-darwin-x64@1.2.4 OK for: sharp@0.34.5 want: 1.2.4
+375 silly placeDep ROOT @img/sharp-libvips-linux-arm@1.2.4 OK for: sharp@0.34.5 want: 1.2.4
+376 silly placeDep ROOT @img/sharp-libvips-linux-arm64@1.2.4 OK for: sharp@0.34.5 want: 1.2.4
+377 silly placeDep ROOT @img/sharp-libvips-linux-ppc64@1.2.4 OK for: sharp@0.34.5 want: 1.2.4
+378 silly placeDep ROOT @img/sharp-libvips-linux-riscv64@1.2.4 OK for: sharp@0.34.5 want: 1.2.4
+379 silly placeDep ROOT @img/sharp-libvips-linux-s390x@1.2.4 OK for: sharp@0.34.5 want: 1.2.4
+380 silly placeDep ROOT @img/sharp-libvips-linux-x64@1.2.4 OK for: sharp@0.34.5 want: 1.2.4
+381 silly placeDep ROOT @img/sharp-libvips-linuxmusl-arm64@1.2.4 OK for: sharp@0.34.5 want: 1.2.4
+382 silly placeDep ROOT @img/sharp-libvips-linuxmusl-x64@1.2.4 OK for: sharp@0.34.5 want: 1.2.4
+383 silly placeDep ROOT @img/sharp-linux-arm@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+384 silly placeDep ROOT @img/sharp-linux-arm64@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+385 silly placeDep ROOT @img/sharp-linux-ppc64@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+386 silly placeDep ROOT @img/sharp-linux-riscv64@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+387 silly placeDep ROOT @img/sharp-linux-s390x@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+388 silly placeDep ROOT @img/sharp-linux-x64@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+389 silly placeDep ROOT @img/sharp-linuxmusl-arm64@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+390 silly placeDep ROOT @img/sharp-linuxmusl-x64@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+391 silly placeDep ROOT @img/sharp-wasm32@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+392 silly placeDep ROOT @img/sharp-win32-arm64@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+393 silly placeDep ROOT @img/sharp-win32-ia32@0.34.5 OK for: sharp@0.34.5 want: 0.34.5
+394 silly fetch manifest @unrs/resolver-binding-darwin-arm64@1.12.2
+395 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-darwin-arm64 cache-miss
+396 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-darwin-arm64 487ms (cache revalidated)
+397 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-darwin-arm64 set size:63676 disposed:false
+398 silly fetch manifest @unrs/resolver-binding-android-arm64@1.12.2
+399 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-android-arm64 cache-miss
+400 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-android-arm64 486ms (cache revalidated)
+401 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-android-arm64 set size:17616 disposed:false
+402 silly fetch manifest @unrs/resolver-binding-win32-arm64-msvc@1.12.2
+403 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-win32-arm64-msvc cache-miss
+404 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-win32-arm64-msvc 183ms (cache revalidated)
+405 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-win32-arm64-msvc set size:64613 disposed:false
+406 silly fetch manifest @unrs/resolver-binding-linux-arm64-gnu@1.12.2
+407 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm64-gnu cache-miss
+408 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm64-gnu 393ms (cache revalidated)
+409 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm64-gnu set size:65047 disposed:false
+410 silly fetch manifest @unrs/resolver-binding-linux-arm64-musl@1.12.2
+411 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm64-musl cache-miss
+412 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm64-musl 1088ms (cache revalidated)
+413 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm64-musl set size:65257 disposed:false
+414 silly fetch manifest @unrs/resolver-binding-openharmony-arm64@1.12.2
+415 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-openharmony-arm64 cache-miss
+416 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-openharmony-arm64 157ms (cache revalidated)
+417 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-openharmony-arm64 set size:7350 disposed:false
+418 silly fetch manifest @unrs/resolver-binding-android-arm-eabi@1.12.2
+419 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-android-arm-eabi cache-miss
+420 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-android-arm-eabi 669ms (cache revalidated)
+421 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-android-arm-eabi set size:17797 disposed:false
+422 silly fetch manifest @unrs/resolver-binding-linux-arm-gnueabihf@1.12.2
+423 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm-gnueabihf cache-miss
+424 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm-gnueabihf 146ms (cache revalidated)
+425 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm-gnueabihf set size:65279 disposed:false
+426 silly fetch manifest @unrs/resolver-binding-linux-arm-musleabihf@1.12.2
+427 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm-musleabihf cache-miss
+428 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm-musleabihf 437ms (cache revalidated)
+429 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-arm-musleabihf set size:65533 disposed:false
+430 silly fetch manifest @unrs/resolver-binding-win32-ia32-msvc@1.12.2
+431 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-win32-ia32-msvc cache-miss
+432 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-win32-ia32-msvc 586ms (cache revalidated)
+433 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-win32-ia32-msvc set size:64317 disposed:false
+434 silly fetch manifest @unrs/resolver-binding-linux-loong64-gnu@1.12.2
+435 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-loong64-gnu cache-miss
+436 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-loong64-gnu 201ms (cache revalidated)
+437 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-loong64-gnu set size:4107 disposed:false
+438 silly fetch manifest @unrs/resolver-binding-linux-loong64-musl@1.12.2
+439 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-loong64-musl cache-miss
+440 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-loong64-musl 179ms (cache revalidated)
+441 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-loong64-musl set size:4124 disposed:false
+442 silly fetch manifest @unrs/resolver-binding-linux-ppc64-gnu@1.12.2
+443 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-ppc64-gnu cache-miss
+444 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-ppc64-gnu 1393ms (cache revalidated)
+445 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-ppc64-gnu set size:65057 disposed:false
+446 silly fetch manifest @unrs/resolver-binding-linux-riscv64-gnu@1.12.2
+447 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-riscv64-gnu cache-miss
+448 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-riscv64-gnu 152ms (cache revalidated)
+449 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-riscv64-gnu set size:56387 disposed:false
+450 silly fetch manifest @unrs/resolver-binding-linux-riscv64-musl@1.12.2
+451 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-riscv64-musl cache-miss
+452 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-riscv64-musl 174ms (cache revalidated)
+453 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-riscv64-musl set size:45710 disposed:false
+454 silly fetch manifest @unrs/resolver-binding-linux-s390x-gnu@1.12.2
+455 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-s390x-gnu cache-miss
+456 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-s390x-gnu 715ms (cache revalidated)
+457 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-s390x-gnu set size:65047 disposed:false
+458 silly fetch manifest @unrs/resolver-binding-wasm32-wasi@1.12.2
+459 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-wasm32-wasi cache-miss
+460 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-wasm32-wasi 1247ms (cache revalidated)
+461 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-wasm32-wasi set size:67358 disposed:false
+462 silly fetch manifest @unrs/resolver-binding-darwin-x64@1.12.2
+463 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-darwin-x64 cache-miss
+464 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-darwin-x64 150ms (cache revalidated)
+465 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-darwin-x64 set size:63092 disposed:false
+466 silly fetch manifest @unrs/resolver-binding-freebsd-x64@1.12.2
+467 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-freebsd-x64 cache-miss
+468 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-freebsd-x64 332ms (cache revalidated)
+469 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-freebsd-x64 set size:63388 disposed:false
+470 silly fetch manifest @unrs/resolver-binding-linux-x64-gnu@1.12.2
+471 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-x64-gnu cache-miss
+472 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-x64-gnu 717ms (cache revalidated)
+473 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-x64-gnu set size:64469 disposed:false
+474 silly fetch manifest @unrs/resolver-binding-linux-x64-musl@1.12.2
+475 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-x64-musl cache-miss
+476 http fetch GET 200 https://registry.npmjs.org/@unrs%2fresolver-binding-linux-x64-musl 1324ms (cache revalidated)
+477 silly packumentCache full:https://registry.npmjs.org/@unrs%2fresolver-binding-linux-x64-musl set size:64685 disposed:false
+478 silly placeDep ROOT @unrs/resolver-binding-android-arm-eabi@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+479 silly placeDep ROOT @unrs/resolver-binding-android-arm64@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+480 silly placeDep ROOT @unrs/resolver-binding-darwin-arm64@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+481 silly placeDep ROOT @unrs/resolver-binding-darwin-x64@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+482 silly placeDep ROOT @unrs/resolver-binding-freebsd-x64@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+483 silly placeDep ROOT @unrs/resolver-binding-linux-arm-gnueabihf@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+484 silly placeDep ROOT @unrs/resolver-binding-linux-arm-musleabihf@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+485 silly placeDep ROOT @unrs/resolver-binding-linux-arm64-gnu@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+486 silly placeDep ROOT @unrs/resolver-binding-linux-arm64-musl@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+487 silly placeDep ROOT @unrs/resolver-binding-linux-loong64-gnu@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+488 silly placeDep ROOT @unrs/resolver-binding-linux-loong64-musl@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+489 silly placeDep ROOT @unrs/resolver-binding-linux-ppc64-gnu@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+490 silly placeDep ROOT @unrs/resolver-binding-linux-riscv64-gnu@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+491 silly placeDep ROOT @unrs/resolver-binding-linux-riscv64-musl@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+492 silly placeDep ROOT @unrs/resolver-binding-linux-s390x-gnu@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+493 silly placeDep ROOT @unrs/resolver-binding-linux-x64-gnu@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+494 silly placeDep ROOT @unrs/resolver-binding-linux-x64-musl@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+495 silly placeDep ROOT @unrs/resolver-binding-openharmony-arm64@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+496 silly placeDep ROOT @unrs/resolver-binding-wasm32-wasi@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+497 silly placeDep ROOT @unrs/resolver-binding-win32-arm64-msvc@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+498 silly placeDep ROOT @unrs/resolver-binding-win32-ia32-msvc@1.12.2 OK for: unrs-resolver@1.12.2 want: 1.12.2
+499 silly fetch manifest @napi-rs/wasm-runtime@^1.1.4
+500 silly packumentCache full:https://registry.npmjs.org/@napi-rs%2fwasm-runtime cache-miss
+501 silly fetch manifest @emnapi/core@1.10.0
+502 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fcore cache-miss
+503 silly fetch manifest @emnapi/runtime@1.10.0
+504 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fruntime cache-miss
+505 http cache https://registry.npmjs.org/@napi-rs%2fwasm-runtime 81ms (cache hit)
+506 silly packumentCache full:https://registry.npmjs.org/@napi-rs%2fwasm-runtime set size:76486 disposed:false
+507 http cache https://registry.npmjs.org/@emnapi%2fcore 95ms (cache hit)
+508 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fcore set size:117071 disposed:false
+509 http fetch GET 200 https://registry.npmjs.org/@emnapi%2fruntime 191ms (cache revalidated)
+510 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fruntime set size:118526 disposed:false
+511 silly placeDep ROOT @emnapi/core@1.10.0 OK for: @unrs/resolver-binding-wasm32-wasi@1.12.2 want: 1.10.0
+512 silly placeDep node_modules/@unrs/resolver-binding-wasm32-wasi @emnapi/runtime@1.10.0 OK for: @unrs/resolver-binding-wasm32-wasi@1.12.2 want: 1.10.0
+513 silly placeDep ROOT @napi-rs/wasm-runtime@1.1.6 OK for: @unrs/resolver-binding-wasm32-wasi@1.12.2 want: ^1.1.4
+514 silly fetch manifest @emnapi/wasi-threads@1.2.1
+515 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fwasi-threads cache-miss
+516 silly fetch manifest @tybys/wasm-util@^0.10.3
+517 silly packumentCache full:https://registry.npmjs.org/@tybys%2fwasm-util cache-miss
+518 http cache https://registry.npmjs.org/@tybys%2fwasm-util 76ms (cache hit)
+519 silly packumentCache full:https://registry.npmjs.org/@tybys%2fwasm-util set size:60108 disposed:false
+520 http cache https://registry.npmjs.org/@emnapi%2fwasi-threads 87ms (cache hit)
+521 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fwasi-threads set size:28580 disposed:false
+522 silly placeDep ROOT @emnapi/wasi-threads@1.2.1 OK for: @emnapi/core@1.10.0 want: 1.2.1
+523 silly placeDep ROOT @tybys/wasm-util@0.10.3 OK for: @napi-rs/wasm-runtime@1.1.6 want: ^0.10.3
+524 silly reify mark retired [
+524 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\acorn',
+524 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\acorn',
+524 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\acorn.cmd',
+524 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\acorn.ps1'
+524 silly reify ]
+525 silly reify mark retired [
+525 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\autoprefixer',
+525 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\autoprefixer',
+525 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\autoprefixer.cmd',
+525 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\autoprefixer.ps1'
+525 silly reify ]
+526 silly reify mark retired [
+526 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\baseline-browser-mapping',
+526 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\baseline-browser-mapping',
+526 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\baseline-browser-mapping.cmd',
+526 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\baseline-browser-mapping.ps1'
+526 silly reify ]
+527 silly reify mark retired [
+527 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\browserslist',
+527 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\browserslist',
+527 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\browserslist.cmd',
+527 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\browserslist.ps1'
+527 silly reify ]
+528 silly reify mark retired [
+528 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\cssesc',
+528 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\cssesc',
+528 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\cssesc.cmd',
+528 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\cssesc.ps1'
+528 silly reify ]
+529 silly reify mark retired [
+529 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\esbuild',
+529 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\esbuild',
+529 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\esbuild.cmd',
+529 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\esbuild.ps1'
+529 silly reify ]
+530 silly reify mark retired [
+530 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\eslint',
+530 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\eslint',
+530 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\eslint.cmd',
+530 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\eslint.ps1'
+530 silly reify ]
+531 silly reify mark retired [
+531 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\semver',
+531 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\.bin\\semver',
+531 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\.bin\\semver.cmd',
+531 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\.bin\\semver.ps1'
+531 silly reify ]
+532 silly reify mark retired [
+532 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\jiti',
+532 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jiti',
+532 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jiti.cmd',
+532 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jiti.ps1'
+532 silly reify ]
+533 silly reify mark retired [
+533 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\js-yaml',
+533 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\js-yaml',
+533 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\js-yaml.cmd',
+533 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\js-yaml.ps1'
+533 silly reify ]
+534 silly reify mark retired [
+534 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\jsesc',
+534 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jsesc',
+534 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jsesc.cmd',
+534 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jsesc.ps1'
+534 silly reify ]
+535 silly reify mark retired [
+535 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\json5',
+535 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\json5',
+535 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\json5.cmd',
+535 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\json5.ps1'
+535 silly reify ]
+536 silly reify mark retired [
+536 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\loose-envify',
+536 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\loose-envify',
+536 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\loose-envify.cmd',
+536 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\loose-envify.ps1'
+536 silly reify ]
+537 silly reify mark retired [
+537 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\lz-string',
+537 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\lz-string',
+537 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\lz-string.cmd',
+537 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\lz-string.ps1'
+537 silly reify ]
+538 silly reify mark retired [
+538 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\next',
+538 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\next',
+538 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\next.cmd',
+538 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\next.ps1'
+538 silly reify ]
+539 silly reify mark retired [
+539 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\napi-postinstall',
+539 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\napi-postinstall',
+539 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\napi-postinstall.cmd',
+539 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\napi-postinstall.ps1'
+539 silly reify ]
+540 silly reify mark retired [
+540 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\nanoid',
+540 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\nanoid',
+540 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\nanoid.cmd',
+540 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\nanoid.ps1'
+540 silly reify ]
+541 silly reify mark retired [
+541 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\resolve',
+541 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\.bin\\resolve',
+541 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\.bin\\resolve.cmd',
+541 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\.bin\\resolve.ps1'
+541 silly reify ]
+542 silly reify mark retired [
+542 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\resolve',
+542 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\resolve',
+542 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\resolve.cmd',
+542 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\resolve.ps1'
+542 silly reify ]
+543 silly reify mark retired [
+543 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\rollup',
+543 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\rollup',
+543 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\rollup.cmd',
+543 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\rollup.ps1'
+543 silly reify ]
+544 silly reify mark retired [
+544 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\semver',
+544 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\semver',
+544 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\semver.cmd',
+544 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\semver.ps1'
+544 silly reify ]
+545 silly reify mark retired [
+545 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\semver',
+545 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\.bin\\semver',
+545 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\.bin\\semver.cmd',
+545 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\.bin\\semver.ps1'
+545 silly reify ]
+546 silly reify mark retired [
+546 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sucrase',
+546 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase',
+546 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase.cmd',
+546 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase.ps1',
+546 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase-node',
+546 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase-node.cmd',
+546 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase-node.ps1'
+546 silly reify ]
+547 silly reify mark retired [
+547 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tailwindcss',
+547 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwind',
+547 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwind.cmd',
+547 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwind.ps1',
+547 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwindcss',
+547 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwindcss.cmd',
+547 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwindcss.ps1'
+547 silly reify ]
+548 silly reify mark retired [
+548 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tldts',
+548 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tldts',
+548 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tldts.cmd',
+548 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tldts.ps1'
+548 silly reify ]
+549 silly reify mark retired [
+549 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\json5',
+549 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\.bin\\json5',
+549 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\.bin\\json5.cmd',
+549 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\.bin\\json5.ps1'
+549 silly reify ]
+550 silly reify mark retired [
+550 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\typescript',
+550 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsc',
+550 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsc.cmd',
+550 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsc.ps1',
+550 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsserver',
+550 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsserver.cmd',
+550 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsserver.ps1'
+550 silly reify ]
+551 silly reify mark retired [
+551 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\update-browserslist-db',
+551 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\update-browserslist-db',
+551 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\update-browserslist-db.cmd',
+551 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\update-browserslist-db.ps1'
+551 silly reify ]
+552 silly reify mark retired [
+552 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\vitest',
+552 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vitest',
+552 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vitest.cmd',
+552 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vitest.ps1'
+552 silly reify ]
+553 silly reify mark retired [
+553 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\vite',
+553 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite',
+553 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite.cmd',
+553 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite.ps1'
+553 silly reify ]
+554 silly reify mark retired [
+554 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\vite-node',
+554 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite-node',
+554 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite-node.cmd',
+554 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite-node.ps1'
+554 silly reify ]
+555 silly reify mark retired [
+555 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\which',
+555 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\node-which',
+555 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\node-which.cmd',
+555 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\node-which.ps1'
+555 silly reify ]
+556 silly reify mark retired [
+556 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\why-is-node-running',
+556 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\why-is-node-running',
+556 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\why-is-node-running.cmd',
+556 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\why-is-node-running.ps1'
+556 silly reify ]
+557 silly reify mark retired [
+557 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@babel\\parser',
+557 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\parser',
+557 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\parser.cmd',
+557 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\parser.ps1'
+557 silly reify ]
+558 silly reify mark retired [
+558 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@emnapi\\runtime'
+558 silly reify ]
+559 silly reify mark retired [
+559 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\semver',
+559 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\.bin\\semver',
+559 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\.bin\\semver.cmd',
+559 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\.bin\\semver.ps1'
+559 silly reify ]
+560 silly reify moves {
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\acorn': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.acorn-sleLYvTX',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\acorn': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.acorn-Kv1dyhZG',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\acorn.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.acorn.cmd-EbaJXVkQ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\acorn.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.acorn.ps1-gbcWIbNa',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\autoprefixer': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.autoprefixer-Lobk1oZI',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\autoprefixer': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.autoprefixer-5ccv0FPF',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\autoprefixer.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.autoprefixer.cmd-av6FPYPQ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\autoprefixer.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.autoprefixer.ps1-3b6wRVrw',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\baseline-browser-mapping': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.baseline-browser-mapping-xXcyJnrq',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\baseline-browser-mapping': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.baseline-browser-mapping-UZoAF2EF',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\baseline-browser-mapping.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.baseline-browser-mapping.cmd-ppOKMYw2',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\baseline-browser-mapping.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.baseline-browser-mapping.ps1-aK3IXniq',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\browserslist': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.browserslist-PKjDx6xD',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\browserslist': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.browserslist-HCAuoOb7',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\browserslist.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.browserslist.cmd-kEzpaTqX',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\browserslist.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.browserslist.ps1-wwrCE9ei',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\cssesc': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.cssesc-rUy8gcAd',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\cssesc': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.cssesc-MiqR9Lu4',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\cssesc.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.cssesc.cmd-rXM4iMg5',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\cssesc.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.cssesc.ps1-qSx6VBDP',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\esbuild': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.esbuild-jofFR6iO',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\esbuild': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.esbuild-xWFd9OVj',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\esbuild.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.esbuild.cmd-uqCwOGhN',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\esbuild.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.esbuild.ps1-f9KIFn66',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\eslint': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.eslint-qHWB9obe',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\eslint': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.eslint-2M8o0JOc',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\eslint.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.eslint.cmd-4356YENW',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\eslint.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.eslint.ps1-UGwDPgpI',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\semver': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\.semver-1nIPSuru',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\.bin\\semver': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\.bin\\.semver-a4pu4t0s',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\.bin\\semver.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\.bin\\.semver.cmd-GBxdn6TV',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\.bin\\semver.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\is-bun-module\\node_modules\\.bin\\.semver.ps1-ydrcjzAp',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\jiti': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.jiti-fyLbv9y5',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jiti': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.jiti-Cdfz2Nwa',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jiti.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.jiti.cmd-UQD2V5vu',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jiti.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.jiti.ps1-GTtUX76n',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\js-yaml': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.js-yaml-kPpghkDU',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\js-yaml': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.js-yaml-VlBHaAaD',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\js-yaml.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.js-yaml.cmd-yDdWIx8X',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\js-yaml.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.js-yaml.ps1-A3J4fel5',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\jsesc': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.jsesc-JbIywcIC',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jsesc': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.jsesc-1mrYxE2x',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jsesc.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.jsesc.cmd-Zn06cCEo',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\jsesc.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.jsesc.ps1-TdIGJyLQ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\json5': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.json5-Q02Ml6T8',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\json5': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.json5-dfTrpimQ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\json5.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.json5.cmd-SUbQ5JqR',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\json5.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.json5.ps1-IaAAZgtG',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\loose-envify': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.loose-envify-xMPvGxLM',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\loose-envify': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.loose-envify-yfXNfx1O',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\loose-envify.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.loose-envify.cmd-Jx3WhPzb',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\loose-envify.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.loose-envify.ps1-Rc7CJyQ8',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\lz-string': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.lz-string-2Jewkxya',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\lz-string': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.lz-string-KylYgFId',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\lz-string.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.lz-string.cmd-BMRIJTA8',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\lz-string.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.lz-string.ps1-c240z2lr',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\next': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.next-Qkb9yt1l',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\next': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.next-NUw5bHbN',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\next.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.next.cmd-DrbeHWpS',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\next.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.next.ps1-JSPqqWFg',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\napi-postinstall': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.napi-postinstall-bJYTrIZ6',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\napi-postinstall': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.napi-postinstall-b4LjGtHl',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\napi-postinstall.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.napi-postinstall.cmd-i5OqStdJ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\napi-postinstall.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.napi-postinstall.ps1-HBSkbNIF',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\nanoid': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.nanoid-8e18Jo4S',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\nanoid': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.nanoid-32RCNXWz',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\nanoid.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.nanoid.cmd-QfC0JIPY',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\nanoid.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.nanoid.ps1-NHNubOjB',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\resolve': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\.resolve-pZrKY2jW',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\.bin\\resolve': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\.bin\\.resolve-vwQe5B94',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\.bin\\resolve.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\.bin\\.resolve.cmd-3u9FGpr5',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\.bin\\resolve.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\postcss-import\\node_modules\\.bin\\.resolve.ps1-06DdmLHl',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\resolve': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.resolve-ssHPec7z',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\resolve': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.resolve-owNNFhX0',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\resolve.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.resolve.cmd-w2rOxhFm',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\resolve.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.resolve.ps1-vrqZrBoH',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\rollup': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.rollup-OhwEcKMW',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\rollup': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.rollup-6HE83nAF',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\rollup.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.rollup.cmd-GdjRwmWD',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\rollup.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.rollup.ps1-cKxZnfeI',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\semver': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.semver-DFejbPlb',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\semver': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.semver-y7GgjiEB',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\semver.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.semver.cmd-Xnjgc880',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\semver.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.semver.ps1-sxsY661T',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\semver': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\.semver-zeaXsSdT',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\.bin\\semver': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\.bin\\.semver-XMxqnDBQ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\.bin\\semver.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\.bin\\.semver.cmd-Uk7EdiUJ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\.bin\\semver.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sharp\\node_modules\\.bin\\.semver.ps1-4lygCg9n',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\sucrase': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.sucrase-H7DfHkdW',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.sucrase-zLm90XOJ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.sucrase.cmd-vd2BkO7M',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.sucrase.ps1-0FfFw0pn',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase-node': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.sucrase-node-F2z3U19S',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase-node.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.sucrase-node.cmd-crEJQSwQ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\sucrase-node.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.sucrase-node.ps1-Uw7Sf3uL',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tailwindcss': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.tailwindcss-tydukSRA',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwind': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tailwind-kTJhLlo8',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwind.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tailwind.cmd-c7AjFN8Q',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwind.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tailwind.ps1-F2Hu03RV',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwindcss': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tailwindcss-qlLyaMUa',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwindcss.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tailwindcss.cmd-gF0BwvUQ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tailwindcss.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tailwindcss.ps1-vP04Y0rj',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tldts': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.tldts-FZZC0rzg',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tldts': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tldts-yukkmFHL',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tldts.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tldts.cmd-iln3T60w',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tldts.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tldts.ps1-495Fm4Uf',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\json5': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\.json5-Rs6SOfoD',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\.bin\\json5': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\.bin\\.json5-IqjPxkzC',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\.bin\\json5.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\.bin\\.json5.cmd-ahy5LlNd',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\.bin\\json5.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\tsconfig-paths\\node_modules\\.bin\\.json5.ps1-IqyNb3lp',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\typescript': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.typescript-PyPgzm8n',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsc': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tsc-hTQhN9U3',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsc.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tsc.cmd-X6ijmUhq',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsc.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tsc.ps1-Yh4gl64T',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsserver': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tsserver-rFOKPWZo',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsserver.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tsserver.cmd-ieYddwsd',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\tsserver.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.tsserver.ps1-HxevnBEF',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\update-browserslist-db': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.update-browserslist-db-1JqADAze',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\update-browserslist-db': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.update-browserslist-db-XqoiGrUp',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\update-browserslist-db.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.update-browserslist-db.cmd-gNYIrIIY',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\update-browserslist-db.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.update-browserslist-db.ps1-3frrGzN3',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\vitest': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.vitest-ILRw4eGh',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vitest': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.vitest-PQUGS3Ed',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vitest.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.vitest.cmd-jTnbW6u6',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vitest.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.vitest.ps1-8A6gFahk',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\vite': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.vite-nawFRKaJ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.vite-kFGuWODp',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.vite.cmd-gy2eolbQ',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.vite.ps1-rXK4Vq3V',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\vite-node': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.vite-node-9FsEnSfM',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite-node': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.vite-node-HF6jpCX3',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite-node.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.vite-node.cmd-QbsXliQn',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\vite-node.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.vite-node.ps1-Etv6NVZ4',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\which': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.which-VoJkZoD5',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\node-which': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.node-which-qJDlcu5v',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\node-which.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.node-which.cmd-WF813T9z',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\node-which.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.node-which.ps1-d9TsD9ph',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\why-is-node-running': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.why-is-node-running-qnQRHXMd',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\why-is-node-running': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.why-is-node-running-Upyym2vU',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\why-is-node-running.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.why-is-node-running.cmd-wOr28KQo',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\why-is-node-running.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.why-is-node-running.ps1-Ihpf1qaK',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@babel\\parser': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@babel\\.parser-RK1zYLIS',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\parser': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.parser-9k2LHlBw',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\parser.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.parser.cmd-kJu0TPyY',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\parser.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\.bin\\.parser.ps1-PyVWknKk',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@emnapi\\runtime': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@emnapi\\.runtime-Xfs0ZOXl',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\semver': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\.semver-cEji91J0',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\.bin\\semver': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\.bin\\.semver-nLmxLGNE',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\.bin\\semver.cmd': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\.bin\\.semver.cmd-ETZRR5U2',
+560 silly reify   'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\.bin\\semver.ps1': 'C:\\Users\\admin\\OneDrive - Chulalongkorn University\\Desktop\\VS CODE\\ISE_Sign\\node_modules\\@typescript-eslint\\typescript-estree\\node_modules\\.bin\\.semver.ps1-VZ4Ro3q9'
+560 silly reify }
+561 silly packumentCache corgi:https://registry.npmjs.org/@babel%2fparser cache-miss
+562 silly packumentCache corgi:https://registry.npmjs.org/why-is-node-running cache-miss
+563 http cache @emnapi/wasi-threads@https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.1.tgz 1ms (cache hit)
+564 silly packumentCache corgi:https://registry.npmjs.org/which cache-miss
+565 silly packumentCache corgi:https://registry.npmjs.org/vite cache-miss
+566 silly packumentCache corgi:https://registry.npmjs.org/typescript cache-miss
+567 silly packumentCache corgi:https://registry.npmjs.org/update-browserslist-db cache-miss
+568 silly packumentCache corgi:https://registry.npmjs.org/sucrase cache-miss
+569 silly packumentCache corgi:https://registry.npmjs.org/tailwindcss cache-miss
+570 silly packumentCache corgi:https://registry.npmjs.org/vite-node cache-miss
+571 silly packumentCache corgi:https://registry.npmjs.org/vitest cache-miss
+572 silly packumentCache corgi:https://registry.npmjs.org/rollup cache-miss
+573 silly packumentCache corgi:https://registry.npmjs.org/loose-envify cache-miss
+574 silly packumentCache corgi:https://registry.npmjs.org/napi-postinstall cache-miss
+575 silly packumentCache corgi:https://registry.npmjs.org/jsesc cache-miss
+576 silly packumentCache corgi:https://registry.npmjs.org/tldts cache-miss
+577 silly packumentCache corgi:https://registry.npmjs.org/nanoid cache-miss
+578 silly packumentCache corgi:https://registry.npmjs.org/lz-string cache-miss
+579 silly packumentCache corgi:https://registry.npmjs.org/esbuild cache-miss
+580 silly packumentCache corgi:https://registry.npmjs.org/eslint cache-miss
+581 silly packumentCache corgi:https://registry.npmjs.org/js-yaml cache-miss
+582 silly packumentCache corgi:https://registry.npmjs.org/cssesc cache-miss
+583 silly packumentCache corgi:https://registry.npmjs.org/json5 cache-miss
+584 silly packumentCache corgi:https://registry.npmjs.org/resolve cache-miss
+585 silly packumentCache corgi:https://registry.npmjs.org/semver cache-miss
+586 silly packumentCache corgi:https://registry.npmjs.org/autoprefixer cache-miss
+587 silly packumentCache corgi:https://registry.npmjs.org/resolve cache-miss
+588 silly packumentCache corgi:https://registry.npmjs.org/jiti cache-miss
+589 silly packumentCache corgi:https://registry.npmjs.org/acorn cache-miss
+590 silly packumentCache corgi:https://registry.npmjs.org/browserslist cache-miss
+591 silly packumentCache corgi:https://registry.npmjs.org/semver cache-miss
+592 silly packumentCache corgi:https://registry.npmjs.org/next cache-miss
+593 silly tarball no local data for @emnapi/wasi-threads@https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.1.tgz. Extracting by manifest.
+594 silly packumentCache corgi:https://registry.npmjs.org/semver cache-miss
+595 silly packumentCache corgi:https://registry.npmjs.org/baseline-browser-mapping cache-miss
+596 silly packumentCache corgi:https://registry.npmjs.org/json5 cache-miss
+597 silly packumentCache corgi:https://registry.npmjs.org/semver cache-miss
+598 silly packumentCache corgi:https://registry.npmjs.org/resolve cache-miss
+599 http fetch GET 200 https://registry.npmjs.org/cssesc 4371ms (cache miss)
+600 silly packumentCache corgi:https://registry.npmjs.org/cssesc set size:undefined disposed:false
+601 http fetch GET 200 https://registry.npmjs.org/loose-envify 4578ms (cache miss)
+602 silly packumentCache corgi:https://registry.npmjs.org/loose-envify set size:undefined disposed:false
+603 http fetch GET 200 https://registry.npmjs.org/lz-string 4546ms (cache miss)
+604 silly packumentCache corgi:https://registry.npmjs.org/lz-string set size:undefined disposed:false
+605 http fetch GET 200 https://registry.npmjs.org/json5 4527ms (cache miss)
+606 silly packumentCache corgi:https://registry.npmjs.org/json5 set size:undefined disposed:false
+607 http fetch GET 200 https://registry.npmjs.org/js-yaml 4546ms (cache miss)
+608 silly packumentCache corgi:https://registry.npmjs.org/js-yaml set size:undefined disposed:false
+609 http fetch GET 200 https://registry.npmjs.org/napi-postinstall 4669ms (cache miss)
+610 silly packumentCache corgi:https://registry.npmjs.org/napi-postinstall set size:undefined disposed:false
+611 http fetch GET 200 https://registry.npmjs.org/json5 4610ms (cache miss)
+612 silly packumentCache corgi:https://registry.npmjs.org/json5 set size:undefined disposed:false
+613 http fetch GET 200 https://registry.npmjs.org/jsesc 4783ms (cache miss)
+614 silly packumentCache corgi:https://registry.npmjs.org/jsesc set size:undefined disposed:false
+615 http fetch GET 200 https://registry.npmjs.org/resolve 4712ms (cache miss)
+616 silly packumentCache corgi:https://registry.npmjs.org/resolve set size:undefined disposed:false
+617 http fetch GET 200 https://registry.npmjs.org/semver 4739ms (cache miss)
+618 silly packumentCache corgi:https://registry.npmjs.org/semver set size:undefined disposed:false
+619 http fetch GET 200 https://registry.npmjs.org/why-is-node-running 5119ms (cache miss)
+620 silly packumentCache corgi:https://registry.npmjs.org/why-is-node-running set size:undefined disposed:false
+621 http fetch GET 200 https://registry.npmjs.org/which 5078ms (cache miss)
+622 silly packumentCache corgi:https://registry.npmjs.org/which set size:undefined disposed:false
+623 http fetch GET 200 https://registry.npmjs.org/update-browserslist-db 5034ms (cache miss)
+624 silly packumentCache corgi:https://registry.npmjs.org/update-browserslist-db set size:undefined disposed:false
+625 http fetch GET 200 https://registry.npmjs.org/resolve 4788ms (cache miss)
+626 silly packumentCache corgi:https://registry.npmjs.org/resolve set size:undefined disposed:false
+627 http fetch GET 200 https://registry.npmjs.org/semver 4845ms (cache miss)
+628 silly packumentCache corgi:https://registry.npmjs.org/semver set size:undefined disposed:false
+629 http fetch GET 200 https://registry.npmjs.org/semver 4844ms (cache miss)
+630 silly packumentCache corgi:https://registry.npmjs.org/semver set size:undefined disposed:false
+631 http fetch GET 200 https://registry.npmjs.org/jiti 5310ms (cache miss)
+632 silly packumentCache corgi:https://registry.npmjs.org/jiti set size:undefined disposed:false
+633 http fetch GET 200 https://registry.npmjs.org/browserslist 5548ms (cache miss)
+634 silly packumentCache corgi:https://registry.npmjs.org/browserslist set size:undefined disposed:false
+635 http cache https://registry.npmjs.org/cssesc/-/cssesc-3.0.0.tgz 1243ms (cache hit)
+636 http cache https://registry.npmjs.org/loose-envify/-/loose-envify-1.4.0.tgz 1324ms (cache hit)
+637 http cache https://registry.npmjs.org/lz-string/-/lz-string-1.5.0.tgz 1294ms (cache hit)
+638 http fetch GET 200 https://registry.npmjs.org/baseline-browser-mapping 5736ms (cache miss)
+639 silly packumentCache corgi:https://registry.npmjs.org/baseline-browser-mapping set size:undefined disposed:false
+640 http cache https://registry.npmjs.org/json5/-/json5-2.2.3.tgz 1316ms (cache hit)
+641 http cache https://registry.npmjs.org/napi-postinstall/-/napi-postinstall-0.3.4.tgz 1258ms (cache hit)
+642 http cache https://registry.npmjs.org/js-yaml/-/js-yaml-4.3.0.tgz 1361ms (cache hit)
+643 http fetch GET 200 https://registry.npmjs.org/resolve 5912ms (cache miss)
+644 silly packumentCache corgi:https://registry.npmjs.org/resolve set size:undefined disposed:false
+645 http fetch GET 200 https://registry.npmjs.org/@babel%2fparser 6295ms (cache miss)
+646 silly packumentCache corgi:https://registry.npmjs.org/@babel%2fparser set size:undefined disposed:false
+647 http cache https://registry.npmjs.org/json5/-/json5-1.0.2.tgz 1344ms (cache hit)
+648 http fetch GET 200 https://registry.npmjs.org/semver 6028ms (cache miss)
+649 silly packumentCache corgi:https://registry.npmjs.org/semver set size:undefined disposed:false
+650 http cache https://registry.npmjs.org/jsesc/-/jsesc-3.1.0.tgz 1342ms (cache hit)
+651 http fetch GET 200 https://registry.npmjs.org/autoprefixer 6062ms (cache miss)
+652 silly packumentCache corgi:https://registry.npmjs.org/autoprefixer set size:undefined disposed:false
+653 http cache https://registry.npmjs.org/semver/-/semver-7.8.5.tgz 1339ms (cache hit)
+654 http cache https://registry.npmjs.org/resolve/-/resolve-1.22.12.tgz 1415ms (cache hit)
+655 http cache https://registry.npmjs.org/why-is-node-running/-/why-is-node-running-2.3.0.tgz 1367ms (cache hit)
+656 http cache https://registry.npmjs.org/which/-/which-2.0.2.tgz 1486ms (cache hit)
+657 http cache https://registry.npmjs.org/update-browserslist-db/-/update-browserslist-db-1.2.3.tgz 1521ms (cache hit)
+658 http fetch GET 200 https://registry.npmjs.org/sucrase 6563ms (cache miss)
+659 silly packumentCache corgi:https://registry.npmjs.org/sucrase set size:undefined disposed:false
+660 http cache https://registry.npmjs.org/resolve/-/resolve-1.22.12.tgz 1512ms (cache hit)
+661 http cache https://registry.npmjs.org/semver/-/semver-7.8.5.tgz 1488ms (cache hit)
+662 http cache https://registry.npmjs.org/semver/-/semver-7.8.5.tgz 1621ms (cache hit)
+663 http fetch GET 200 https://registry.npmjs.org/acorn 6682ms (cache miss)
+664 silly packumentCache corgi:https://registry.npmjs.org/acorn set size:undefined disposed:false
+665 http fetch GET 200 https://registry.npmjs.org/nanoid 7475ms (cache miss)
+666 silly packumentCache corgi:https://registry.npmjs.org/nanoid set size:undefined disposed:false
+667 http cache https://registry.npmjs.org/jiti/-/jiti-1.21.7.tgz 2115ms (cache hit)
+668 http cache https://registry.npmjs.org/browserslist/-/browserslist-4.28.6.tgz 2078ms (cache hit)
+669 http cache https://registry.npmjs.org/baseline-browser-mapping/-/baseline-browser-mapping-2.10.43.tgz 2025ms (cache hit)
+670 http cache https://registry.npmjs.org/resolve/-/resolve-2.0.0-next.7.tgz 2020ms (cache hit)
+671 http cache https://registry.npmjs.org/semver/-/semver-6.3.1.tgz 2017ms (cache hit)
+672 http cache https://registry.npmjs.org/autoprefixer/-/autoprefixer-10.5.4.tgz 1975ms (cache hit)
+673 http cache https://registry.npmjs.org/sucrase/-/sucrase-3.35.1.tgz 1984ms (cache hit)
+674 http fetch GET 200 https://registry.npmjs.org/@babel/parser/-/parser-7.29.7.tgz 2621ms (cache revalidated)
+675 http cache https://registry.npmjs.org/acorn/-/acorn-8.17.0.tgz 1955ms (cache hit)
+676 http cache https://registry.npmjs.org/nanoid/-/nanoid-3.3.16.tgz 1741ms (cache hit)
+677 http fetch GET 200 https://registry.npmjs.org/vite-node 9767ms (cache miss)
+678 silly packumentCache corgi:https://registry.npmjs.org/vite-node set size:undefined disposed:false
+679 http fetch GET 200 https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.1.tgz 9645ms (cache miss)
+680 http cache https://registry.npmjs.org/vite-node/-/vite-node-2.1.9.tgz 832ms (cache hit)
+681 http fetch GET 200 https://registry.npmjs.org/eslint 10729ms (cache miss)
+682 silly packumentCache corgi:https://registry.npmjs.org/eslint set size:undefined disposed:false
+683 http fetch GET 200 https://registry.npmjs.org/esbuild 11017ms (cache miss)
+684 silly packumentCache corgi:https://registry.npmjs.org/esbuild set size:undefined disposed:false
+685 http fetch GET 200 https://registry.npmjs.org/vitest 11392ms (cache miss)
+686 silly packumentCache corgi:https://registry.npmjs.org/vitest set size:undefined disposed:false
+687 http cache https://registry.npmjs.org/eslint/-/eslint-9.39.5.tgz 941ms (cache hit)
+688 http cache https://registry.npmjs.org/esbuild/-/esbuild-0.21.5.tgz 978ms (cache hit)
+689 http cache https://registry.npmjs.org/vitest/-/vitest-2.1.9.tgz 928ms (cache hit)
+690 http fetch GET 200 https://registry.npmjs.org/tldts 12388ms (cache miss)
+691 silly packumentCache corgi:https://registry.npmjs.org/tldts set size:undefined disposed:false
+692 http cache https://registry.npmjs.org/tldts/-/tldts-6.1.86.tgz 687ms (cache hit)
+693 http fetch GET 200 https://registry.npmjs.org/rollup 13245ms (cache miss)
+694 silly packumentCache corgi:https://registry.npmjs.org/rollup set size:undefined disposed:false
+695 http cache https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz 516ms (cache hit)
+696 http fetch GET 200 https://registry.npmjs.org/vite 14021ms (cache miss)
+697 silly packumentCache corgi:https://registry.npmjs.org/vite set size:undefined disposed:false
+698 http cache https://registry.npmjs.org/vite/-/vite-5.4.21.tgz 682ms (cache hit)
+699 http fetch GET 200 https://registry.npmjs.org/tailwindcss 16679ms (cache miss)
+700 silly packumentCache corgi:https://registry.npmjs.org/tailwindcss set size:undefined disposed:false
+701 http cache https://registry.npmjs.org/tailwindcss/-/tailwindcss-3.4.19.tgz 567ms (cache hit)
+702 http fetch GET 200 https://registry.npmjs.org/typescript 20360ms (cache miss)
+703 silly packumentCache corgi:https://registry.npmjs.org/typescript set size:undefined disposed:false
+704 http cache https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz 795ms (cache hit)
+705 http fetch GET 200 https://registry.npmjs.org/next 25851ms (cache miss)
+706 silly packumentCache corgi:https://registry.npmjs.org/next set size:undefined disposed:false
+707 http fetch GET 200 https://registry.npmjs.org/next/-/next-16.2.10.tgz 175432ms (cache miss)
+708 info run esbuild@0.21.5 postinstall node_modules/esbuild node install.js
+709 info run esbuild@0.21.5 postinstall { code: 0, signal: null }
+710 silly ADD node_modules/@emnapi/wasi-threads
+711 silly CHANGE node_modules/@typescript-eslint/typescript-estree/node_modules/semver
+712 silly REMOVE node_modules/@emnapi/runtime
+713 silly CHANGE node_modules/@babel/parser
+714 silly CHANGE node_modules/why-is-node-running
+715 silly CHANGE node_modules/which
+716 silly CHANGE node_modules/vite-node
+717 silly CHANGE node_modules/vite
+718 silly CHANGE node_modules/vitest
+719 silly CHANGE node_modules/update-browserslist-db
+720 silly CHANGE node_modules/typescript
+721 silly CHANGE node_modules/tsconfig-paths/node_modules/json5
+722 silly CHANGE node_modules/tldts
+723 silly CHANGE node_modules/tailwindcss
+724 silly CHANGE node_modules/tailwindcss/node_modules/resolve
+725 silly CHANGE node_modules/sucrase
+726 silly CHANGE node_modules/sharp/node_modules/semver
+727 silly CHANGE node_modules/semver
+728 silly CHANGE node_modules/rollup
+729 silly CHANGE node_modules/resolve
+730 silly CHANGE node_modules/postcss-import/node_modules/resolve
+731 silly CHANGE node_modules/nanoid
+732 silly CHANGE node_modules/napi-postinstall
+733 silly CHANGE node_modules/next
+734 silly CHANGE node_modules/lz-string
+735 silly CHANGE node_modules/loose-envify
+736 silly CHANGE node_modules/json5
+737 silly CHANGE node_modules/jsesc
+738 silly CHANGE node_modules/js-yaml
+739 silly CHANGE node_modules/jiti
+740 silly CHANGE node_modules/is-bun-module/node_modules/semver
+741 silly CHANGE node_modules/eslint
+742 silly CHANGE node_modules/esbuild
+743 silly CHANGE node_modules/cssesc
+744 silly CHANGE node_modules/browserslist
+745 silly CHANGE node_modules/baseline-browser-mapping
+746 silly CHANGE node_modules/autoprefixer
+747 silly CHANGE node_modules/acorn
+748 verbose cwd C:\Users\admin\OneDrive - Chulalongkorn University\Desktop\VS CODE\ISE_Sign
+749 verbose os Windows_NT 10.0.26200
+750 verbose node v24.11.1
+751 verbose npm  v11.6.2
+752 verbose exit 0
+753 info ok
