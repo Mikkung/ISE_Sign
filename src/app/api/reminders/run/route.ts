@@ -47,6 +47,7 @@ type ReminderAssignmentRow = {
   } | null;
 };
 type DedupeLogRow = { dedupe_key: string };
+type InsertedNotificationRow = { id: string };
 
 function policyFromRow(row: ReminderPolicyRow): ReminderPolicy {
   if (!row) {
@@ -236,26 +237,37 @@ export async function POST(request: Request) {
         }
       }
 
-      const { data: log } = await supabase
+      const insertedLog = await supabase
         .from("notification_logs")
-        .upsert(
-          {
-            recipient_id: recipient.id,
-            project_id: row.step?.project?.id,
-            assignment_id: row.id,
-            channel: command.channel as NotificationChannel,
-            type: command.type,
-            subject,
-            body: command.message,
-            status,
-            error: errorMessage,
-            sent_at: sentAt,
-            dedupe_key: command.dedupeKey
-          },
-          { onConflict: "dedupe_key", ignoreDuplicates: true }
-        )
+        .insert({
+          recipient_id: recipient.id,
+          project_id: row.step?.project?.id,
+          assignment_id: row.id,
+          channel: command.channel as NotificationChannel,
+          type: command.type,
+          subject,
+          body: command.message,
+          status,
+          error: errorMessage,
+          sent_at: sentAt,
+          dedupe_key: command.dedupeKey
+        })
         .select("id")
         .maybeSingle();
+      const log =
+        insertedLog.error?.code === "23505"
+          ? (
+              await supabase
+                .from("notification_logs")
+                .select("id")
+                .eq("dedupe_key", command.dedupeKey)
+                .maybeSingle()
+            ).data
+          : (insertedLog.data as InsertedNotificationRow | null);
+
+      if (insertedLog.error && insertedLog.error.code !== "23505") {
+        return NextResponse.json({ error: insertedLog.error.message }, { status: 500 });
+      }
 
       await supabase.from("reminder_events").upsert(
         {

@@ -135,6 +135,16 @@ type ProjectRow = {
   abstract: string | null;
   status: ProjectStatus;
   academic_program: string | null;
+  project_type_category: string | null;
+  project_type_custom: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  requester_student_id: string | null;
+  requester_email: string | null;
+  requester_first_name: string | null;
+  requester_last_name: string | null;
+  requester_verified_at: string | null;
+  requester_auth_user_id: string | null;
   due_at: string | null;
   submitted_at: string | null;
   completed_at: string | null;
@@ -187,6 +197,16 @@ const projectSelect = `
   abstract,
   status,
   academic_program,
+  project_type_category,
+  project_type_custom,
+  start_date,
+  end_date,
+  requester_student_id,
+  requester_email,
+  requester_first_name,
+  requester_last_name,
+  requester_verified_at,
+  requester_auth_user_id,
   due_at,
   submitted_at,
   completed_at,
@@ -402,8 +422,30 @@ export function mapProject(row: ProjectRow): Project {
     title: row.title,
     abstract: row.abstract ?? "",
     status: row.status as ProjectStatus,
-    projectType: row.project_type?.name ?? "Project",
+    projectType: row.project_type_category === "Other"
+      ? row.project_type_custom ?? "Other"
+      : row.project_type_category ?? row.project_type?.name ?? "Project",
+    projectTypeCategory: row.project_type_category ?? undefined,
+    projectTypeCustom: row.project_type_custom ?? undefined,
     academicProgram: row.academic_program ?? "-",
+    startDate: row.start_date ?? undefined,
+    endDate: row.end_date ?? undefined,
+    verifiedRequester:
+      row.requester_student_id &&
+      row.requester_email &&
+      row.requester_first_name &&
+      row.requester_last_name &&
+      row.requester_verified_at &&
+      row.requester_auth_user_id
+        ? {
+            studentId: row.requester_student_id,
+            email: row.requester_email,
+            firstName: row.requester_first_name,
+            lastName: row.requester_last_name,
+            verifiedAt: row.requester_verified_at,
+            authUserId: row.requester_auth_user_id
+          }
+        : undefined,
     student: mapProfile(row.student),
     members: [],
     assignedStaff: row.assigned_staff ? mapProfile(row.assigned_staff) : undefined,
@@ -445,17 +487,39 @@ function nextActionForStatus(status: ProjectStatus): string {
 }
 
 export async function listProjects(): Promise<Project[]> {
+  return listProjectsFiltered();
+}
+
+export async function listProjectsFiltered(filters: {
+  status?: string;
+  projectTypeId?: string;
+  q?: string;
+} = {}): Promise<Project[]> {
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
     return [];
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("projects")
     .select(projectSelect)
     .order("updated_at", { ascending: false })
     .limit(100);
+
+  if (filters.status && filters.status !== "all") {
+    query = query.eq("status", filters.status);
+  }
+
+  if (filters.projectTypeId && filters.projectTypeId !== "all") {
+    query = query.eq("project_type_id", filters.projectTypeId);
+  }
+
+  if (filters.q?.trim()) {
+    query = query.ilike("title", `%${filters.q.trim()}%`);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw new Error(error.message);
@@ -590,6 +654,35 @@ export async function listAuditLogs(): Promise<AuditLogRecord[]> {
   const { data, error } = await supabase
     .from("audit_logs")
     .select("id, action, entity_type, entity_id, metadata, created_at, actor:profiles(display_name, email)")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return ((data ?? []) as unknown as AuditRow[]).map((row) => ({
+    id: row.id,
+    action: row.action,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at,
+    actor: row.actor?.display_name ?? row.actor?.email ?? "System"
+  }));
+}
+
+export async function listProjectAuditLogs(projectId: string): Promise<AuditLogRecord[]> {
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("id, action, entity_type, entity_id, metadata, created_at, actor:profiles(display_name, email)")
+    .eq("entity_id", projectId)
     .order("created_at", { ascending: false })
     .limit(100);
 

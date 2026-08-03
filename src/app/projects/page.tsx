@@ -1,38 +1,46 @@
 import Link from "next/link";
 import { ProjectTable } from "@/components/project-table";
-import { listProjects } from "@/lib/data";
+import { listProjectTypes, listProjectsFiltered } from "@/lib/data";
 
-export default async function ProjectsPage() {
-  const projects = await listProjects();
+export default async function ProjectsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ status?: string; projectTypeId?: string; q?: string }>;
+}) {
+  const filters = await searchParams;
+  const [projects, projectTypes] = await Promise.all([listProjectsFiltered(filters), listProjectTypes()]);
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-950">โครงการ</h2>
-          <p className="mt-1 text-sm text-slate-500">ติดตามสถานะ เอกสาร ความคิดเห็น และผลการอนุมัติ</p>
+          <h2 className="text-2xl font-semibold text-slate-950">Projects</h2>
+          <p className="mt-1 text-sm text-slate-500">Track status, attachments, comments, and approval results.</p>
         </div>
         <Link href="/projects/new" className="rounded bg-ise-maroon px-3 py-2 text-sm font-semibold text-white">
-          สร้างโครงการ
+          Create Project
         </Link>
       </div>
-      <div className="grid gap-3 rounded border border-slate-200 bg-white p-4 md:grid-cols-4">
-        <select className="rounded border border-slate-300 px-3 py-2 text-sm" aria-label="สถานะ">
-          <option>ทุกสถานะ</option>
-          <option>รอตรวจสอบ</option>
-          <option>รออนุมัติ</option>
-          <option>เสร็จสมบูรณ์</option>
+      <form className="grid gap-3 rounded border border-slate-200 bg-white p-4 md:grid-cols-4">
+        <select name="status" defaultValue={filters.status ?? "all"} className="rounded border border-slate-300 px-3 py-2 text-sm" aria-label="Status">
+          <option value="all">All Statuses</option>
+          <option value="submitted">Submitted</option>
+          <option value="staff_review">Staff Review</option>
+          <option value="approval_pending">Pending Approval</option>
+          <option value="revision_required">Revision Requested</option>
+          <option value="completed">Completed</option>
         </select>
-        <select className="rounded border border-slate-300 px-3 py-2 text-sm" aria-label="ประเภทโครงการ">
-          <option>ทุกประเภท</option>
-          <option>Senior Project</option>
-          <option>Capstone</option>
+        <select name="projectTypeId" defaultValue={filters.projectTypeId ?? "all"} className="rounded border border-slate-300 px-3 py-2 text-sm" aria-label="Project Type">
+          <option value="all">All Types</option>
+          {projectTypes.map((type) => (
+            <option key={type.id} value={type.id}>{type.name}</option>
+          ))}
         </select>
-        <input className="rounded border border-slate-300 px-3 py-2 text-sm" placeholder="ค้นหาชื่อโครงการ" />
+        <input name="q" defaultValue={filters.q ?? ""} className="rounded border border-slate-300 px-3 py-2 text-sm" placeholder="Search project title" />
         <button className="rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">
-          กรองข้อมูล
+          Filter
         </button>
-      </div>
+      </form>
       <ProjectTable projects={projects} />
     </div>
   );

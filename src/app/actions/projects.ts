@@ -1,24 +1,38 @@
 "use server";
 
 import { randomUUID } from "crypto";
+import { cookies } from "next/headers";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createDocumentHash, createVerificationCode } from "@/lib/certificates";
 import { certificationStatement } from "@/lib/constants";
+import { createEmailProvider } from "@/lib/email";
+import {
+  allowedAttachmentMimeTypes,
+  buildStudentVerificationEmail,
+  canSendVerificationCode,
+  createVerificationSalt,
+  generateSixDigitCode,
+  getVerificationRecordState,
+  hashSessionBinding,
+  hashVerificationCode,
+  maxAttachmentBytes,
+  normalizeProjectType,
+  projectRequestSchema,
+  validateStudentDirectoryRecord,
+  validateStudentEmailForSignedInAccount,
+  verificationCodeMaxAttempts,
+  verificationCodeSchema,
+  verificationCodeTtlMinutes,
+  verifyVerificationCodeHash
+} from "@/lib/project-request-validation";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { ApprovalDecision, CompletionRule, StepMode, UserRole } from "@/lib/types";
 
 const uuidSchema = z.string().uuid();
-const projectSchema = z.object({
-  title: z.string().trim().min(3),
-  abstract: z.string().trim().optional(),
-  projectTypeId: z.string().uuid().optional(),
-  projectType: z.string().trim().optional(),
-  academicProgram: z.string().trim().min(1),
-  intent: z.enum(["draft", "submit"])
-});
 const workflowStepSchema = z.object({
   name: z.string().trim().min(2),
   mode: z.enum(["sequential", "parallel"]),
@@ -158,33 +172,202 @@ async function audit(
   });
 }
 
-async function resolveProjectTypeId(
-  supabase: Awaited<ReturnType<typeof requireSupabase>>,
-  payload: z.infer<typeof projectSchema>
-) {
-  if (payload.projectTypeId) {
-    return payload.projectTypeId;
+function requireAdminClient() {
+  const admin = createSupabaseAdminClient();
+
+  if (!admin) {
+    throw new Error("Server-side Supabase service access is not configured.");
   }
 
-  if (!payload.projectType) {
-    throw new Error("Project type is required.");
+  return admin;
+}
+
+function requireVerificationPepper() {
+  const pepper = process.env.STUDENT_VERIFICATION_PEPPER;
+
+  if (!pepper) {
+    throw new Error("Student verification is not configured.");
   }
 
-  const { data, error } = await supabase
-    .from("project_types")
-    .select("id")
-    .eq("name", payload.projectType)
+  return pepper;
+}
+
+async function getVerificationSessionFingerprint() {
+  const pepper = requireVerificationPepper();
+  const cookieStore = await cookies();
+  let sessionId = cookieStore.get("student_project_session_id")?.value;
+
+  if (!sessionId) {
+    sessionId = randomUUID();
+    cookieStore.set("student_project_session_id", sessionId, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60,
+      path: "/projects/new"
+    });
+  }
+
+  return hashSessionBinding(sessionId, pepper);
+}
+
+async function logVerificationEmailDelivery(input: {
+  supabase: Awaited<ReturnType<typeof requireSupabase>>;
+  userId: string;
+  subject: string;
+  status: "sent" | "failed";
+  provider: string;
+}) {
+  await input.supabase.from("notification_logs").insert({
+    recipient_id: input.userId,
+    channel: "email",
+    type: "student_email_verification",
+    subject: input.subject,
+    body: `Student project verification code delivery ${input.status} through ${input.provider}.`,
+    status: input.status,
+    sent_at: input.status === "sent" ? new Date().toISOString() : null,
+    dedupe_key: `${input.userId}:student-email-verification:${Date.now()}`
+  });
+}
+
+async function uploadProjectAttachment(input: {
+  supabase: Awaited<ReturnType<typeof requireSupabase>>;
+  userId: string;
+  projectId: string;
+  file: File;
+  documentType?: string;
+}) {
+  const documentType = input.documentType ?? "Attachment";
+
+  if (input.file.size <= 0) {
+    throw new Error("Attachment cannot be empty.");
+  }
+
+  if (input.file.size > maxAttachmentBytes) {
+    throw new Error("Attachment must be 50 MB or smaller.");
+  }
+
+  const mimeType = input.file.type || "application/octet-stream";
+
+  if (!allowedAttachmentMimeTypes.includes(mimeType as (typeof allowedAttachmentMimeTypes)[number])) {
+    throw new Error("Attachment file type is not allowed.");
+  }
+
+  const bytes = Buffer.from(await input.file.arrayBuffer());
+  const sha256Hash = createDocumentHash(bytes);
+  const documentId = randomUUID();
+  const { error: documentError } = await input.supabase
+    .from("project_documents")
+    .insert({ id: documentId, project_id: input.projectId, document_type: documentType });
+
+  if (documentError) {
+    throw new Error(documentError.message);
+  }
+
+  const storagePath = `${input.projectId}/${documentId}/v1-${randomUUID()}-${sanitizeFilename(input.file.name)}`;
+  const { error: uploadError } = await input.supabase.storage
+    .from("project-documents")
+    .upload(storagePath, bytes, {
+      contentType: mimeType,
+      upsert: false
+    });
+
+  if (uploadError) {
+    throw new Error(uploadError.message);
+  }
+
+  const { error: versionError } = await input.supabase.from("project_document_versions").insert({
+    document_id: documentId,
+    version_number: 1,
+    storage_bucket: "project-documents",
+    storage_path: storagePath,
+    original_file_name: input.file.name,
+    mime_type: mimeType,
+    file_size: input.file.size,
+    sha256_hash: sha256Hash,
+    active: true,
+    uploaded_by: input.userId
+  });
+
+  if (versionError) {
+    await input.supabase.storage.from("project-documents").remove([storagePath]);
+    throw new Error(versionError.message);
+  }
+
+  return { documentId, sha256Hash };
+}
+
+async function requireVerifiedRequester(input: {
+  userId: string;
+  signedInEmail?: string | null;
+  enteredEmail: string;
+  verificationId?: string;
+}) {
+  const emailCheck = validateStudentEmailForSignedInAccount({
+    enteredEmail: input.enteredEmail,
+    signedInEmail: input.signedInEmail
+  });
+
+  if (!emailCheck.ok) {
+    throw new Error(emailCheck.error);
+  }
+
+  if (!input.verificationId) {
+    throw new Error("Verify your student email before submitting the project.");
+  }
+
+  const admin = requireAdminClient();
+  const sessionFingerprint = await getVerificationSessionFingerprint();
+  const { data: verification, error: verificationError } = await admin
+    .from("student_email_verifications")
+    .select("id, user_id, email, expires_at, verified_at, consumed_at, session_fingerprint")
+    .eq("id", input.verificationId)
     .maybeSingle();
 
-  if (error) {
-    throw new Error(error.message);
+  if (verificationError) {
+    throw new Error(verificationError.message);
   }
 
-  if (!data) {
-    throw new Error("Selected project type does not exist.");
+  if (
+    !verification ||
+    verification.user_id !== input.userId ||
+    verification.email !== emailCheck.email ||
+    verification.session_fingerprint !== sessionFingerprint ||
+    !verification.verified_at ||
+    verification.consumed_at ||
+    new Date(verification.expires_at).getTime() <= Date.now()
+  ) {
+    throw new Error("Verify your student email before submitting the project.");
   }
 
-  return data.id as string;
+  const { data: student, error: studentError } = await admin
+    .from("student_directory")
+    .select("id, student_id, email, first_name, last_name, is_active")
+    .eq("student_id", emailCheck.studentId)
+    .eq("email", emailCheck.email)
+    .maybeSingle();
+
+  if (studentError) {
+    throw new Error(studentError.message);
+  }
+
+  if (!student || !validateStudentDirectoryRecord({
+    studentId: student.student_id,
+    email: student.email,
+    isActive: student.is_active
+  })) {
+    throw new Error("We could not verify an active student directory record for this email.");
+  }
+
+  return {
+    verificationId: verification.id as string,
+    verifiedAt: verification.verified_at as string,
+    directoryId: student.id as string,
+    studentId: student.student_id as string,
+    email: student.email as string,
+    firstName: student.first_name as string,
+    lastName: student.last_name as string
+  };
 }
 
 async function getLatestActiveDocumentVersion(
@@ -387,21 +570,32 @@ async function createInAppNotification(
   body: string,
   dedupeKey: string
 ) {
-  await supabase.from("notification_logs").upsert(
-    {
-      recipient_id: recipientId,
-      project_id: projectId,
-      assignment_id: assignmentId,
-      channel: "in_app",
-      type,
-      subject,
-      body,
-      status: "sent",
-      sent_at: new Date().toISOString(),
-      dedupe_key: dedupeKey
-    },
-    { onConflict: "dedupe_key", ignoreDuplicates: true }
-  );
+  const existing = await supabase
+    .from("notification_logs")
+    .select("id")
+    .eq("dedupe_key", dedupeKey)
+    .maybeSingle();
+
+  if (existing.data) {
+    return;
+  }
+
+  const { error } = await supabase.from("notification_logs").insert({
+    recipient_id: recipientId,
+    project_id: projectId,
+    assignment_id: assignmentId,
+    channel: "in_app",
+    type,
+    subject,
+    body,
+    status: "sent",
+    sent_at: new Date().toISOString(),
+    dedupe_key: dedupeKey
+  });
+
+  if (error && error.code !== "23505") {
+    throw new Error(error.message);
+  }
 }
 
 async function notifyActiveStep(
@@ -435,45 +629,310 @@ async function notifyActiveStep(
   );
 }
 
-export async function createProjectAction(formData: FormData) {
-  const payload = projectSchema.parse(Object.fromEntries(formData));
+export async function sendStudentProjectVerificationCodeAction(formData: FormData) {
   const supabase = await requireSupabase();
-  const { user } = await getCurrentProfile(supabase);
-  const projectTypeId = await resolveProjectTypeId(supabase, payload);
-  const now = new Date().toISOString();
+  const { user, profile } = await getCurrentProfile(supabase);
+  requireRole(profile.role, ["student"]);
 
-  const { data, error } = await supabase
-    .from("projects")
+  const emailCheck = validateStudentEmailForSignedInAccount({
+    enteredEmail: formData.get("studentEmail"),
+    signedInEmail: user.email
+  });
+
+  if (!emailCheck.ok) {
+    redirect(`/projects/new?studentEmailError=${encodeURIComponent(emailCheck.error)}`);
+  }
+
+  const admin = requireAdminClient();
+  const sessionFingerprint = await getVerificationSessionFingerprint();
+  const now = new Date();
+  const { data: latest, error: latestError } = await admin
+    .from("student_email_verifications")
+    .select("id, sent_at")
+    .eq("user_id", user.id)
+    .eq("email", emailCheck.email)
+    .order("sent_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (latestError) {
+    throw new Error(latestError.message);
+  }
+
+  if (!canSendVerificationCode({ lastSentAt: latest?.sent_at ?? null, now })) {
+    redirect(
+      `/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&verificationMessage=${encodeURIComponent(
+        "A verification code was recently sent. Please wait before requesting another code."
+      )}`
+    );
+  }
+
+  await admin
+    .from("student_email_verifications")
+    .update({ consumed_at: now.toISOString() })
+    .eq("user_id", user.id)
+    .eq("email", emailCheck.email)
+    .is("consumed_at", null);
+
+  const code = generateSixDigitCode();
+  const codeHash = hashVerificationCode(code, createVerificationSalt(), requireVerificationPepper());
+  const expiresAt = new Date(now.getTime() + verificationCodeTtlMinutes * 60 * 1000).toISOString();
+  const { data: verification, error: insertError } = await admin
+    .from("student_email_verifications")
     .insert({
-      title: payload.title,
-      abstract: payload.abstract ?? "",
-      project_type_id: projectTypeId,
-      academic_program: payload.academicProgram,
-      student_id: user.id,
-      status: payload.intent === "submit" ? "submitted" : "draft",
-      submitted_at: payload.intent === "submit" ? now : null
+      user_id: user.id,
+      email: emailCheck.email,
+      code_hash: codeHash,
+      expires_at: expiresAt,
+      max_attempts: verificationCodeMaxAttempts,
+      session_fingerprint: sessionFingerprint
     })
     .select("id")
     .single();
+
+  if (insertError) {
+    throw new Error(insertError.message);
+  }
+
+  const email = buildStudentVerificationEmail(code);
+  const provider = createEmailProvider();
+  const result = await provider.send({
+    to: emailCheck.email,
+    subject: email.subject,
+    html: email.html,
+    text: email.text
+  });
+
+  if (!result.sent) {
+    await admin.from("student_email_verifications").update({ consumed_at: new Date().toISOString() }).eq("id", verification.id);
+    await logVerificationEmailDelivery({
+      supabase,
+      userId: user.id,
+      subject: email.subject,
+      status: "failed",
+      provider: result.provider
+    });
+    redirect(
+      `/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&studentEmailError=${encodeURIComponent(
+        "Verification email could not be sent. Check SMTP configuration and try again."
+      )}`
+    );
+  }
+
+  await logVerificationEmailDelivery({
+    supabase,
+    userId: user.id,
+    subject: email.subject,
+    status: "sent",
+    provider: result.provider
+  });
+
+  redirect(
+    `/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&verificationMessage=${encodeURIComponent(
+      "If this email can be verified, a six-digit code has been sent."
+    )}`
+  );
+}
+
+export async function verifyStudentProjectEmailCodeAction(formData: FormData) {
+  const supabase = await requireSupabase();
+  const { user, profile } = await getCurrentProfile(supabase);
+  requireRole(profile.role, ["student"]);
+
+  const emailCheck = validateStudentEmailForSignedInAccount({
+    enteredEmail: formData.get("studentEmail"),
+    signedInEmail: user.email
+  });
+  const code = verificationCodeSchema.parse(formData.get("verificationCode"));
+
+  if (!emailCheck.ok) {
+    redirect(`/projects/new?studentEmailError=${encodeURIComponent(emailCheck.error)}`);
+  }
+
+  const admin = requireAdminClient();
+  const sessionFingerprint = await getVerificationSessionFingerprint();
+  const { data: verification, error } = await admin
+    .from("student_email_verifications")
+    .select("id, user_id, email, code_hash, expires_at, attempt_count, max_attempts, verified_at, consumed_at, session_fingerprint")
+    .eq("user_id", user.id)
+    .eq("email", emailCheck.email)
+    .is("consumed_at", null)
+    .order("sent_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  await audit(supabase, user.id, payload.intent === "submit" ? "project.submitted" : "project.created", "project", data.id);
+  const failUrl = `/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&studentEmailError=${encodeURIComponent(
+    "The verification code is invalid or expired."
+  )}`;
+
+  if (
+    !verification ||
+    verification.session_fingerprint !== sessionFingerprint ||
+    verification.verified_at ||
+    getVerificationRecordState({
+      expiresAt: verification.expires_at,
+      attemptCount: verification.attempt_count,
+      maxAttempts: verification.max_attempts,
+      verifiedAt: verification.verified_at,
+      consumedAt: verification.consumed_at
+    }) !== "ok"
+  ) {
+    redirect(failUrl);
+  }
+
+  const matches = verifyVerificationCodeHash({
+    code,
+    storedHash: verification.code_hash,
+    pepper: requireVerificationPepper()
+  });
+
+  if (!matches) {
+    await admin
+      .from("student_email_verifications")
+      .update({ attempt_count: verification.attempt_count + 1 })
+      .eq("id", verification.id);
+    redirect(failUrl);
+  }
+
+  const { data: student, error: studentError } = await admin
+    .from("student_directory")
+    .select("id, student_id, email, first_name, last_name, is_active")
+    .eq("student_id", emailCheck.studentId)
+    .eq("email", emailCheck.email)
+    .maybeSingle();
+
+  if (studentError) {
+    throw new Error(studentError.message);
+  }
+
+  if (!student || !validateStudentDirectoryRecord({ studentId: student.student_id, email: student.email, isActive: student.is_active })) {
+    redirect(
+      `/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&studentEmailError=${encodeURIComponent(
+        "We could not verify an active student directory record for this email."
+      )}`
+    );
+  }
+
+  await admin
+    .from("student_email_verifications")
+    .update({ verified_at: new Date().toISOString() })
+    .eq("id", verification.id);
+  await audit(supabase, user.id, "student.email_verified", "student_email_verification", verification.id, {
+    email: emailCheck.email,
+    studentId: emailCheck.studentId
+  });
+
+  redirect(`/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&verificationId=${verification.id}`);
+}
+
+export async function createProjectAction(formData: FormData) {
+  const payload = projectRequestSchema.parse(Object.fromEntries(formData));
+  const supabase = await requireSupabase();
+  const { user, profile } = await getCurrentProfile(supabase);
+  requireRole(profile.role, ["student"]);
+  const projectType = normalizeProjectType({
+    category: payload.projectTypeCategory,
+    custom: payload.projectTypeCustom
+  });
+  const requester =
+    payload.verificationId
+      ? await requireVerifiedRequester({
+          userId: user.id,
+          signedInEmail: user.email,
+          enteredEmail: payload.studentEmail,
+          verificationId: payload.verificationId
+        })
+      : null;
+  const now = new Date().toISOString();
+  const projectId = randomUUID();
+  const attachments = formData
+    .getAll("attachments")
+    .filter((file): file is File => file instanceof File && file.size > 0);
+
+  const { error } = await supabase
+    .from("projects")
+    .insert({
+      id: projectId,
+      title: payload.title,
+      abstract: payload.abstract ?? "",
+      project_type_id: null,
+      project_type_category: projectType.category,
+      project_type_custom: projectType.custom,
+      academic_program: payload.academicProgram ?? null,
+      start_date: payload.startDate,
+      end_date: payload.endDate,
+      student_id: user.id,
+      status: "draft",
+      student_directory_id: requester?.directoryId ?? null,
+      student_email_verification_id: requester?.verificationId ?? null,
+      requester_student_id: requester?.studentId ?? null,
+      requester_email: requester?.email ?? null,
+      requester_first_name: requester?.firstName ?? null,
+      requester_last_name: requester?.lastName ?? null,
+      requester_verified_at: requester?.verifiedAt ?? null,
+      requester_auth_user_id: requester ? user.id : null
+    });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  try {
+    for (const file of attachments) {
+      const uploaded = await uploadProjectAttachment({ supabase, userId: user.id, projectId, file });
+      await audit(supabase, user.id, "document.version_uploaded", "project", projectId, uploaded);
+    }
+
+    if (payload.intent === "submit") {
+      if (attachments.length === 0) {
+        throw new Error("Add at least one attachment before submitting the project.");
+      }
+
+      const { error: submitError } = await supabase
+        .from("projects")
+        .update({ status: "submitted", submitted_at: now, updated_at: now })
+        .eq("id", projectId)
+        .eq("status", "draft");
+
+      if (submitError) {
+        throw new Error(submitError.message);
+      }
+
+      const admin = requireAdminClient();
+      await admin
+        .from("student_email_verifications")
+        .update({ consumed_at: new Date().toISOString(), project_id: projectId })
+        .eq("id", requester?.verificationId);
+    }
+  } catch (uploadOrSubmitError) {
+    await audit(supabase, user.id, "project.create_failed", "project", projectId, {
+      reason: uploadOrSubmitError instanceof Error ? uploadOrSubmitError.message : "Unknown error"
+    });
+    throw uploadOrSubmitError;
+  }
+
+  await audit(supabase, user.id, payload.intent === "submit" ? "project.submitted" : "project.created", "project", projectId, {
+    projectTypeCategory: projectType.category,
+    projectTypeCustom: projectType.custom,
+    requesterVerified: Boolean(requester)
+  });
   revalidatePath("/projects");
-  redirect(`/projects/${data.id}`);
+  redirect(`/projects/${projectId}`);
 }
 
 export async function updateProjectAction(projectId: string, formData: FormData) {
   uuidSchema.parse(projectId);
   const payload = z
-    .object({
-      title: z.string().trim().min(3),
-      abstract: z.string().trim().optional(),
-      academicProgram: z.string().trim().min(1)
-    })
+    .preprocess((value) => ({ ...(value as Record<string, unknown>), intent: "draft" }), projectRequestSchema)
     .parse(Object.fromEntries(formData));
+  const projectType = normalizeProjectType({
+    category: payload.projectTypeCategory,
+    custom: payload.projectTypeCustom
+  });
   const supabase = await requireSupabase();
   const { user, profile } = await getCurrentProfile(supabase);
   await assertProjectAccess(supabase, projectId);
@@ -502,7 +961,11 @@ export async function updateProjectAction(projectId: string, formData: FormData)
     .update({
       title: payload.title,
       abstract: payload.abstract ?? "",
-      academic_program: payload.academicProgram,
+      academic_program: payload.academicProgram ?? null,
+      project_type_category: projectType.category,
+      project_type_custom: projectType.custom,
+      start_date: payload.startDate,
+      end_date: payload.endDate,
       updated_at: new Date().toISOString()
     })
     .eq("id", projectId);
@@ -547,17 +1010,14 @@ export async function uploadDocumentVersionAction(projectId: string, formData: F
   let documentId = document?.id as string | undefined;
 
   if (!documentId) {
-    const { data: createdDocument, error } = await supabase
+    documentId = randomUUID();
+    const { error } = await supabase
       .from("project_documents")
-      .insert({ project_id: projectId, document_type: documentType })
-      .select("id")
-      .single();
+      .insert({ id: documentId, project_id: projectId, document_type: documentType });
 
     if (error) {
       throw new Error(error.message);
     }
-
-    documentId = createdDocument.id;
   }
 
   const { data: latestVersion, error: latestError } = await supabase
@@ -627,10 +1087,43 @@ export async function submitProjectAction(projectId: string) {
     throw new Error("Upload at least one active document version before submitting.");
   }
 
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id, student_id, requester_email, student_email_verification_id")
+    .eq("id", projectId)
+    .maybeSingle();
+
+  if (projectError) {
+    throw new Error(projectError.message);
+  }
+
+  if (!project || project.student_id !== user.id || !project.requester_email || !project.student_email_verification_id) {
+    throw new Error("Verify your student email before submitting the project.");
+  }
+
+  const requester = await requireVerifiedRequester({
+    userId: user.id,
+    signedInEmail: user.email,
+    enteredEmail: project.requester_email,
+    verificationId: project.student_email_verification_id
+  });
+
   const now = new Date().toISOString();
   const { error } = await supabase
     .from("projects")
-    .update({ status: "submitted", submitted_at: now, updated_at: now })
+    .update({
+      status: "submitted",
+      submitted_at: now,
+      updated_at: now,
+      student_directory_id: requester.directoryId,
+      student_email_verification_id: requester.verificationId,
+      requester_student_id: requester.studentId,
+      requester_email: requester.email,
+      requester_first_name: requester.firstName,
+      requester_last_name: requester.lastName,
+      requester_verified_at: requester.verifiedAt,
+      requester_auth_user_id: user.id
+    })
     .eq("id", projectId)
     .in("status", ["draft", "revision_required"]);
 
@@ -641,6 +1134,11 @@ export async function submitProjectAction(projectId: string) {
   await audit(supabase, user.id, "project.submitted", "project", projectId, {
     documentVersionId: documentVersion.id
   });
+  const admin = requireAdminClient();
+  await admin
+    .from("student_email_verifications")
+    .update({ consumed_at: new Date().toISOString(), project_id: projectId })
+    .eq("id", requester.verificationId);
   revalidatePath(`/projects/${projectId}`);
   revalidatePath("/projects");
 }
@@ -778,9 +1276,11 @@ export async function addWorkflowStepAction(projectId: string, formData: FormDat
   }
 
   const stepOrder = (latestStep?.step_order ?? 0) + 1;
-  const { data: step, error } = await supabase
+  const stepId = randomUUID();
+  const { error } = await supabase
     .from("workflow_steps")
     .insert({
+      id: stepId,
       project_id: projectId,
       name: payload.name,
       step_order: stepOrder,
@@ -790,9 +1290,7 @@ export async function addWorkflowStepAction(projectId: string, formData: FormDat
       minimum_approvals: payload.completionRule === "minimum" ? payload.minimumApprovals : null,
       due_at: payload.dueAt || null,
       created_by: user.id
-    })
-    .select("id")
-    .single();
+    });
 
   if (error) {
     throw new Error(error.message);
@@ -800,7 +1298,8 @@ export async function addWorkflowStepAction(projectId: string, formData: FormDat
 
   if (approverIds.length > 0) {
     const assignments = approverIds.map((approverId) => ({
-      workflow_step_id: step.id,
+      id: randomUUID(),
+      workflow_step_id: stepId,
       approver_id: approverId,
       due_at: payload.dueAt || null
     }));
@@ -814,7 +1313,7 @@ export async function addWorkflowStepAction(projectId: string, formData: FormDat
   if ((actionCount ?? 0) > 0) {
     await supabase.from("workflow_change_log").insert({
       project_id: projectId,
-      workflow_step_id: step.id,
+      workflow_step_id: stepId,
       changed_by: user.id,
       change_type: "step_added_after_action",
       reason: payload.reason,
@@ -822,7 +1321,7 @@ export async function addWorkflowStepAction(projectId: string, formData: FormDat
     });
   }
 
-  await audit(supabase, user.id, "workflow.step_added", "project", projectId, { stepId: step.id });
+  await audit(supabase, user.id, "workflow.step_added", "project", projectId, { stepId });
   revalidatePath(`/projects/${projectId}/workflow`);
   revalidatePath(`/projects/${projectId}`);
 }
@@ -868,15 +1367,15 @@ export async function addApproverToStepAction(projectId: string, stepId: string,
     throw new Error("Adding an approver after activation requires a reason.");
   }
 
-  const { data: assignment, error } = await supabase
+  const assignmentId = randomUUID();
+  const { error } = await supabase
     .from("workflow_assignments")
     .insert({
+      id: assignmentId,
       workflow_step_id: stepId,
       approver_id: approverId,
       due_at: dueAt || null
-    })
-    .select("id")
-    .single();
+    });
 
   if (error) {
     throw new Error(error.message);
@@ -889,7 +1388,7 @@ export async function addApproverToStepAction(projectId: string, stepId: string,
       changed_by: user.id,
       change_type: "approver_added_after_activation",
       reason,
-      after_state: { approverId, assignmentId: assignment.id }
+      after_state: { approverId, assignmentId }
     });
   }
 
@@ -963,10 +1462,24 @@ export async function markAssignmentOpenedAction(assignmentId: string) {
   const supabase = await requireSupabase();
   const { user } = await getCurrentProfile(supabase);
   const now = new Date().toISOString();
+  const { data: assignment, error: readError } = await supabase
+    .from("workflow_assignments")
+    .select("first_opened_at")
+    .eq("id", assignmentId)
+    .eq("approver_id", user.id)
+    .maybeSingle();
+
+  if (readError) {
+    throw new Error(readError.message);
+  }
 
   const { error } = await supabase
     .from("workflow_assignments")
-    .update({ status: "opened", first_opened_at: now, last_opened_at: now })
+    .update({
+      status: "opened",
+      first_opened_at: assignment?.first_opened_at ?? now,
+      last_opened_at: now
+    })
     .eq("id", assignmentId)
     .eq("approver_id", user.id)
     .in("status", ["waiting", "opened"])
@@ -1198,7 +1711,10 @@ export async function createWorkflowTemplateAction(formData: FormData) {
   const payload = z
     .object({
       name: z.string().trim().min(2),
-      projectTypeId: z.string().uuid().optional(),
+      projectTypeId: z.preprocess(
+        (value) => (value === "" ? undefined : value),
+        z.string().uuid().optional()
+      ),
       stepName: z.string().trim().min(2),
       mode: z.enum(["sequential", "parallel"]),
       completionRule: z.enum(["all", "any", "minimum"]),
@@ -1209,22 +1725,22 @@ export async function createWorkflowTemplateAction(formData: FormData) {
   const { user, profile } = await getCurrentProfile(supabase);
   requireRole(profile.role, ["admin"]);
 
-  const { data: template, error } = await supabase
+  const templateId = randomUUID();
+  const { error } = await supabase
     .from("workflow_templates")
     .insert({
+      id: templateId,
       name: payload.name,
       project_type_id: payload.projectTypeId || null,
       created_by: user.id
-    })
-    .select("id")
-    .single();
+    });
 
   if (error) {
     throw new Error(error.message);
   }
 
   const { error: stepError } = await supabase.from("workflow_template_steps").insert({
-    template_id: template.id,
+    template_id: templateId,
     step_order: 1,
     name: payload.stepName,
     mode: payload.mode as StepMode,
@@ -1236,6 +1752,6 @@ export async function createWorkflowTemplateAction(formData: FormData) {
     throw new Error(stepError.message);
   }
 
-  await audit(supabase, user.id, "admin.workflow_template_created", "workflow_template", template.id, payload);
+  await audit(supabase, user.id, "admin.workflow_template_created", "workflow_template", templateId, payload);
   revalidatePath("/admin/workflow-templates");
 }

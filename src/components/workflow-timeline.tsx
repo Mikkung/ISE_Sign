@@ -6,7 +6,7 @@ export function WorkflowTimeline({ steps }: { steps: WorkflowStep[] }) {
   if (steps.length === 0) {
     return (
       <div className="rounded border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500">
-        ยังไม่ได้กำหนดลำดับการอนุมัติ
+        No approval workflow has been configured.
       </div>
     );
   }
@@ -28,12 +28,12 @@ export function WorkflowTimeline({ steps }: { steps: WorkflowStep[] }) {
                   <h3 className="font-semibold text-slate-950">{step.name}</h3>
                 </div>
                 <p className="mt-1 text-sm text-slate-500">
-                  {step.mode === "parallel" ? "อนุมัติแบบคู่ขนาน" : "อนุมัติแบบลำดับ"} ·{" "}
+                  {step.mode === "parallel" ? "Parallel approval" : "Sequential approval"} ·{" "}
                   {step.completionRule === "all"
-                    ? "ทุกคนต้องอนุมัติ"
+                    ? "All approvers must approve"
                     : step.completionRule === "any"
-                      ? "คนใดคนหนึ่งอนุมัติได้"
-                      : `ต้องอนุมัติอย่างน้อย ${step.minimumApprovals} คน`}
+                      ? "Any approver may approve"
+                      : `At least ${step.minimumApprovals} approver(s) must approve`}
                 </p>
               </div>
               <StatusBadge status={step.status} />
@@ -46,7 +46,7 @@ export function WorkflowTimeline({ steps }: { steps: WorkflowStep[] }) {
                     <p className="text-xs text-slate-500">{assignment.profile.position ?? assignment.profile.role}</p>
                   </div>
                   {assignment.status === "approved" ? (
-                    <Check className="h-4 w-4 text-emerald-600" aria-label="อนุมัติแล้ว" />
+                    <Check className="h-4 w-4 text-emerald-600" aria-label="Approved" />
                   ) : (
                     <span className="text-xs text-slate-500">{assignment.status}</span>
                   )}

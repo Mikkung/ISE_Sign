@@ -84,39 +84,39 @@ export function reminderCommandsForAssignment(
   };
 
   if (ageDays === 0 && assignment.reminderCount === 0) {
-    push("initial_notification", "มีงานอนุมัติใหม่รอการดำเนินการ");
+    push("initial_notification", "A new approval assignment is pending.");
     return commands;
   }
 
   if (!assignment.firstOpenedAt && ageDays >= policy.unopenedAfterDays) {
-    push("unopened_reminder", "ยังไม่ได้เปิดดูคำขออนุมัติที่ได้รับมอบหมาย");
+    push("unopened_reminder", "The assigned approval request has not been opened.");
   }
 
   if (assignment.firstOpenedAt && ageDays >= policy.noActionAfterDays) {
-    push("no_action_reminder", "เปิดดูแล้วแต่ยังไม่ได้ดำเนินการอนุมัติ");
+    push("no_action_reminder", "The approval request has been opened but no action has been taken.");
   }
 
   if (assignment.dueAt) {
     const daysUntilDue = daysBetween(now, assignment.dueAt);
     if (daysUntilDue <= policy.dueSoonBeforeDays && daysUntilDue >= 0) {
-      push("due_soon", "คำขออนุมัติใกล้ครบกำหนด");
+      push("due_soon", "The approval request is due soon.");
     }
 
     if (now > assignment.dueAt) {
-      push("overdue", "คำขออนุมัติเกินกำหนดแล้ว");
+      push("overdue", "The approval request is overdue.");
     }
   }
 
   if (ageDays >= policy.staffNoticeAfterDays) {
-    push("staff_notice", "แจ้งเจ้าหน้าที่ว่าคำขอยังไม่ถูกดำเนินการ");
+    push("staff_notice", "Notify staff that the request is still pending.");
   }
 
   if (ageDays >= policy.escalationAfterDays && assignment.escalationLevel === 0) {
-    push("escalation", "ยกระดับคำขออนุมัติไปยังผู้กำกับดูแล");
+    push("escalation", "Escalate the approval request to a supervisor.");
   }
 
   if (assignment.escalationLevel > 0 && ageDays >= policy.escalationAfterDays) {
-    push("repeat_escalation", "แจ้งเตือนซ้ำหลังการยกระดับ", policy.repeatEscalationEveryDays);
+    push("repeat_escalation", "Repeat escalation reminder", policy.repeatEscalationEveryDays);
   }
 
   return commands;

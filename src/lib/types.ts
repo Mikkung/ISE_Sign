@@ -122,6 +122,15 @@ export interface ApprovalAction {
   invalidatedAt?: string;
 }
 
+export interface VerifiedRequesterIdentity {
+  studentId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  verifiedAt: string;
+  authUserId: string;
+}
+
 export interface Project {
   id: string;
   code: string;
@@ -129,7 +138,12 @@ export interface Project {
   abstract: string;
   status: ProjectStatus;
   projectType: string;
+  projectTypeCategory?: string;
+  projectTypeCustom?: string;
   academicProgram: string;
+  startDate?: string;
+  endDate?: string;
+  verifiedRequester?: VerifiedRequesterIdentity;
   student: Profile;
   members: Profile[];
   assignedStaff?: Profile;

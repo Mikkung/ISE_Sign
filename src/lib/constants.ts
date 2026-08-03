@@ -3,29 +3,29 @@ import type { ProjectStatus, WorkflowStepStatus } from "@/lib/types";
 export const ISE_MAROON = "#8B2332";
 
 export const projectStatusLabels: Record<ProjectStatus, string> = {
-  draft: "ฉบับร่าง",
-  submitted: "ส่งคำขอแล้ว",
-  staff_review: "รอตรวจสอบ",
-  revision_required: "ขอแก้ไข",
-  staff_approved: "ผ่านการตรวจเอกสาร",
-  approval_pending: "รออนุมัติ",
-  partially_approved: "อนุมัติบางส่วน",
-  rejected: "ไม่อนุมัติ",
-  approved: "อนุมัติแล้ว",
-  completed: "เสร็จสมบูรณ์",
-  cancelled: "ยกเลิก"
+  draft: "Draft",
+  submitted: "Submitted",
+  staff_review: "Staff Review",
+  revision_required: "Revision Requested",
+  staff_approved: "Staff Approved",
+  approval_pending: "Pending Approval",
+  partially_approved: "Partially Approved",
+  rejected: "Rejected",
+  approved: "Approved",
+  completed: "Completed",
+  cancelled: "Cancelled"
 };
 
 export const workflowStatusLabels: Record<WorkflowStepStatus, string> = {
-  not_started: "ยังไม่เริ่ม",
-  waiting: "รอเริ่ม",
-  in_progress: "กำลังดำเนินการ",
-  revision_required: "ขอแก้ไข",
-  approved: "อนุมัติแล้ว",
-  rejected: "ไม่อนุมัติ",
-  skipped: "ข้าม",
-  completed: "เสร็จสิ้น",
-  overdue: "เกินกำหนด"
+  not_started: "Not Started",
+  waiting: "Pending",
+  in_progress: "In Progress",
+  revision_required: "Revision Requested",
+  approved: "Approved",
+  rejected: "Rejected",
+  skipped: "Skipped",
+  completed: "Completed",
+  overdue: "Overdue"
 };
 
 export const certificationStatement =

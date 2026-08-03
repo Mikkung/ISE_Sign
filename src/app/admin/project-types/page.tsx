@@ -6,12 +6,12 @@ export default async function AdminProjectTypesPage() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-2xl font-semibold text-slate-950">ประเภทโครงการ</h2>
+      <h2 className="text-2xl font-semibold text-slate-950">Project Types</h2>
       <div className="rounded border border-slate-200 bg-white p-5">
         <form action={createProjectTypeAction} className="flex gap-2">
-          <input name="name" placeholder="ชื่อประเภทโครงการ" className="flex-1 rounded border border-slate-300 px-3 py-2" />
-          <input name="description" placeholder="คำอธิบาย" className="flex-1 rounded border border-slate-300 px-3 py-2" />
-          <button className="rounded bg-ise-maroon px-3 py-2 text-sm font-semibold text-white">เพิ่ม</button>
+          <input name="name" placeholder="Project type name" className="flex-1 rounded border border-slate-300 px-3 py-2" />
+          <input name="description" placeholder="Description" className="flex-1 rounded border border-slate-300 px-3 py-2" />
+          <button className="rounded bg-ise-maroon px-3 py-2 text-sm font-semibold text-white">Add</button>
         </form>
       </div>
       <div className="rounded border border-slate-200 bg-white">

@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { certificationStatement } from "@/lib/constants";
+import { certificationStatement } from "./constants";
 import type { ApprovalAction, Project } from "@/lib/types";
 
 export function createDocumentHash(bytes: Buffer | string): string {

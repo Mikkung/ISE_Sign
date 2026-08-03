@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run --root . --environment node src/lib",
+    "test:watch": "vitest --root . --environment node src/lib"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

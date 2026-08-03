@@ -7,12 +7,12 @@ export default async function ApprovalsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-950">งานอนุมัติของฉัน</h2>
-        <p className="mt-1 text-sm text-slate-500">เปิดเอกสาร แสดงความคิดเห็น ขอแก้ไข หรืออนุมัติและรับรอง</p>
+        <h2 className="text-2xl font-semibold text-slate-950">My Approvals</h2>
+        <p className="mt-1 text-sm text-slate-500">Open attachments, comment, request revision, or approve and certify.</p>
       </div>
       <div className="grid gap-3">
         {assignments.length === 0 ? (
-          <div className="rounded border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500">ไม่มีงานอนุมัติ</div>
+          <div className="rounded border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500">No approval assignments.</div>
         ) : (
           assignments.map((assignment) => (
             <Link

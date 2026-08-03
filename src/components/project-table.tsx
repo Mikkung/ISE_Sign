@@ -8,11 +8,11 @@ export function ProjectTable({ projects }: { projects: Project[] }) {
       <table className="min-w-full divide-y divide-slate-200">
         <thead className="bg-slate-50">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">โครงการ</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">สถานะ</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">ผู้รับผิดชอบ</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">กำหนด</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">ขั้นตอนถัดไป</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Project</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Status</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Owner</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Due</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">Next Action</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">

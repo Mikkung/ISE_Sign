@@ -9,8 +9,8 @@ export default async function StaffReviewPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-950">ตรวจสอบโดยเจ้าหน้าที่</h2>
-        <p className="mt-1 text-sm text-slate-500">ตรวจความครบถ้วน ขอแก้ไข ตั้งค่าผู้อนุมัติ และส่งต่อ workflow</p>
+        <h2 className="text-2xl font-semibold text-slate-950">Staff Review</h2>
+        <p className="mt-1 text-sm text-slate-500">Check completeness, request revision, assign approvers, and advance the approval workflow.</p>
       </div>
       <ProjectTable projects={projects} />
     </div>

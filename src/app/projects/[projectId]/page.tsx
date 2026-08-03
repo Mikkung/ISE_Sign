@@ -40,10 +40,43 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <dd className="font-medium text-slate-900">{project.academicProgram}</dd>
             </div>
             <div>
+              <dt className="text-slate-500">Start Date</dt>
+              <dd className="font-medium text-slate-900">{project.startDate ?? "-"}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">End Date</dt>
+              <dd className="font-medium text-slate-900">{project.endDate ?? "-"}</dd>
+            </div>
+            <div>
               <dt className="text-slate-500">Current owner</dt>
               <dd className="font-medium text-slate-900">{project.currentResponsible ?? "-"}</dd>
             </div>
           </dl>
+          {project.verifiedRequester ? (
+            <div className="mt-5 rounded border border-emerald-200 bg-emerald-50 p-4 text-sm">
+              <h4 className="font-semibold text-emerald-950">Verified Requester Identity</h4>
+              <dl className="mt-3 grid gap-3 md:grid-cols-2">
+                <div>
+                  <dt className="text-emerald-700">Student ID</dt>
+                  <dd className="font-medium text-emerald-950">{project.verifiedRequester.studentId}</dd>
+                </div>
+                <div>
+                  <dt className="text-emerald-700">Student Name</dt>
+                  <dd className="font-medium text-emerald-950">
+                    {project.verifiedRequester.firstName} {project.verifiedRequester.lastName}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-emerald-700">Student Email</dt>
+                  <dd className="font-medium text-emerald-950">{project.verifiedRequester.email}</dd>
+                </div>
+                <div>
+                  <dt className="text-emerald-700">Verified At</dt>
+                  <dd className="font-medium text-emerald-950">{new Date(project.verifiedRequester.verifiedAt).toLocaleString()}</dd>
+                </div>
+              </dl>
+            </div>
+          ) : null}
         </section>
         <section className="rounded border border-slate-200 bg-white p-4 shadow-panel">
           <h3 className="font-semibold text-slate-950">Actions</h3>
