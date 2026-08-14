@@ -5,13 +5,12 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { findActiveStudentByEmail } from "@/lib/student-directory";
 import {
-  STUDENT_EMAIL_ERROR,
   redirectPathForRole,
-  validateStudentEmail
+  validateRequesterEmail
 } from "@/lib/student-registration";
 import type { UserRole } from "@/lib/types";
 
-const studentLoginGenericError = "We could not send a verification code for this student email.";
+const studentLoginGenericError = "We could not send a verification code for this email.";
 const studentOtpError = "The verification code is invalid or expired.";
 const studentOtpRateLimitMessage =
   "A verification code was recently requested. Use the latest code in your inbox or wait 60 seconds before requesting another one.";
@@ -21,9 +20,15 @@ function studentLoginUrl(params: Record<string, string>) {
   return `/login?${search.toString()}`;
 }
 
+function safeNextPath(value: FormDataEntryValue | string | null) {
+  const next = String(value ?? "").trim();
+  return next.startsWith("/") && !next.startsWith("//") ? next : "";
+}
+
 export async function loginAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const next = safeNextPath(formData.get("next"));
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
@@ -61,12 +66,12 @@ export async function loginAction(formData: FormData) {
     redirect(
       studentLoginUrl({
         studentEmail: email,
-        studentError: "Students sign in with an email verification code."
+        studentError: "Requesters sign in with an email verification code."
       })
     );
   }
 
-  redirect(redirectPathForRole(role));
+  redirect(next || redirectPathForRole(role));
 }
 
 export async function logoutAction() {
@@ -80,25 +85,22 @@ export async function logoutAction() {
 }
 
 export async function sendStudentLoginCodeAction(formData: FormData) {
-  const emailResult = validateStudentEmail(formData.get("email"));
+  const emailResult = validateRequesterEmail(formData.get("email"));
+  const next = safeNextPath(formData.get("next"));
 
   if (!emailResult.ok) {
-    redirect(studentLoginUrl({ studentError: STUDENT_EMAIL_ERROR }));
+    redirect(studentLoginUrl({ studentError: emailResult.error, ...(next ? { next } : {}) }));
   }
 
   const student = await findActiveStudentByEmail(emailResult.email);
 
-  if (!student) {
-    redirect(studentLoginUrl({ studentEmail: emailResult.email, studentError: studentLoginGenericError }));
-  }
-
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    redirect(studentLoginUrl({ studentEmail: emailResult.email, studentError: "Supabase is not configured." }));
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, studentError: "Supabase is not configured.", ...(next ? { next } : {}) }));
   }
 
-  const displayName = `${student.firstName} ${student.lastName}`.trim();
+  const displayName = student ? `${student.firstName} ${student.lastName}`.trim() : emailResult.email.split("@")[0];
   const { error } = await supabase.auth.signInWithOtp({
     email: emailResult.email,
     options: {
@@ -115,7 +117,8 @@ export async function sendStudentLoginCodeAction(formData: FormData) {
         studentLoginUrl({
           studentEmail: emailResult.email,
           codeSent: "1",
-          studentError: studentOtpRateLimitMessage
+          studentError: studentOtpRateLimitMessage,
+          ...(next ? { next } : {})
         })
       );
     }
@@ -125,34 +128,31 @@ export async function sendStudentLoginCodeAction(formData: FormData) {
       code: error.code,
       message: error.message
     });
-    redirect(studentLoginUrl({ studentEmail: emailResult.email, studentError: studentLoginGenericError }));
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, studentError: studentLoginGenericError, ...(next ? { next } : {}) }));
   }
 
-  redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1" }));
+  redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", ...(next ? { next } : {}) }));
 }
 
 export async function verifyStudentLoginCodeAction(formData: FormData) {
-  const emailResult = validateStudentEmail(formData.get("email"));
+  const emailResult = validateRequesterEmail(formData.get("email"));
   const token = String(formData.get("token") ?? "").trim();
+  const next = safeNextPath(formData.get("next"));
 
   if (!emailResult.ok) {
-    redirect(studentLoginUrl({ studentError: STUDENT_EMAIL_ERROR }));
+    redirect(studentLoginUrl({ studentError: emailResult.error, ...(next ? { next } : {}) }));
   }
 
   if (!/^\d{6}$/.test(token)) {
-    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: studentOtpError }));
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: studentOtpError, ...(next ? { next } : {}) }));
   }
 
   const student = await findActiveStudentByEmail(emailResult.email);
 
-  if (!student) {
-    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: studentOtpError }));
-  }
-
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: "Supabase is not configured." }));
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: "Supabase is not configured.", ...(next ? { next } : {}) }));
   }
 
   const { data, error } = await supabase.auth.verifyOtp({
@@ -163,31 +163,40 @@ export async function verifyStudentLoginCodeAction(formData: FormData) {
 
   if (error || !data.user || data.user.email?.toLowerCase() !== emailResult.email) {
     await supabase.auth.signOut();
-    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: studentOtpError }));
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: studentOtpError, ...(next ? { next } : {}) }));
   }
 
   const admin = createSupabaseAdminClient();
 
   if (!admin) {
     await supabase.auth.signOut();
-    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: "Student sign-in is not configured." }));
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: "Requester sign-in is not configured.", ...(next ? { next } : {}) }));
   }
 
+  const { data: existingProfile } = await admin
+    .from("profiles")
+    .select("role, display_name, is_active")
+    .eq("id", data.user.id)
+    .maybeSingle();
+  const displayName = student
+    ? `${student.firstName} ${student.lastName}`.trim()
+    : String(existingProfile?.display_name ?? data.user.user_metadata?.display_name ?? emailResult.email.split("@")[0]);
+  const role = (existingProfile?.role as UserRole | undefined) ?? "student";
   const { error: profileError } = await admin.from("profiles").upsert(
     {
       id: data.user.id,
       email: emailResult.email,
-      display_name: `${student.firstName} ${student.lastName}`.trim(),
-      role: "student",
-      is_active: true
+      display_name: displayName,
+      role,
+      is_active: existingProfile?.is_active ?? true
     },
     { onConflict: "id" }
   );
 
   if (profileError) {
     await supabase.auth.signOut();
-    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: studentOtpError }));
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: studentOtpError, ...(next ? { next } : {}) }));
   }
 
-  redirect("/dashboard");
+  redirect(next || redirectPathForRole(role));
 }

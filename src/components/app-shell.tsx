@@ -24,7 +24,7 @@ const navItems: Array<{
   requiresTestDataTools?: boolean;
 }> = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["student", "staff", "approver", "admin"] },
-  { href: "/projects", label: "Projects", icon: FileText, roles: ["student", "staff", "admin"] },
+  { href: "/projects", label: "Projects", icon: FileText, roles: ["student", "staff", "approver", "admin"] },
   { href: "/staff/review", label: "Staff Review", icon: ClipboardCheck, roles: ["staff", "admin"] },
   { href: "/approvals", label: "Approvals", icon: ShieldCheck, roles: ["approver", "staff", "admin"] },
   { href: "/notifications", label: "Notifications", icon: Bell, roles: ["student", "staff", "approver", "admin"] },
@@ -90,13 +90,13 @@ export async function AppShell({ children }: { children: ReactNode }) {
           <div className="mx-auto flex max-w-7xl items-center justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-ise-maroon">Internal System</p>
-              <p className="text-sm text-slate-500">Track, review, approve, and certify student projects.</p>
+              <p className="text-sm text-slate-500">Track, review, approve, and certify project requests.</p>
             </div>
             <Link
               href="/projects/new"
-              className={role === "student" ? "inline-flex items-center rounded bg-ise-maroon px-3 py-2 text-sm font-semibold text-white hover:bg-ise-maroonDark" : "hidden"}
+              className="inline-flex items-center rounded bg-ise-maroon px-3 py-2 text-sm font-semibold text-white hover:bg-ise-maroonDark"
             >
-              Create Project
+              Create Request
             </Link>
           </div>
         </header>

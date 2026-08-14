@@ -30,7 +30,7 @@ export function canCancelProject(input: {
     return { ok: true as const, alreadyCancelled: false };
   }
 
-  if (input.role === "student" && input.userId === input.studentId) {
+  if (input.userId === input.studentId) {
     return { ok: true as const, alreadyCancelled: false };
   }
 

@@ -150,6 +150,9 @@ type ProjectRow = {
   requester_email: string | null;
   requester_first_name: string | null;
   requester_last_name: string | null;
+  requester_name: string | null;
+  requester_type: "student" | "staff" | "faculty" | "external" | "other" | null;
+  requester_organization: string | null;
   requester_verified_at: string | null;
   requester_auth_user_id: string | null;
   due_at: string | null;
@@ -212,6 +215,9 @@ const projectSelect = `
   requester_email,
   requester_first_name,
   requester_last_name,
+  requester_name,
+  requester_type,
+  requester_organization,
   requester_verified_at,
   requester_auth_user_id,
   due_at,
@@ -529,6 +535,11 @@ export function mapProject(row: ProjectRow): Project {
   const activeAssignee = activeStep?.approvers.find((approver) =>
     ["waiting", "opened"].includes(approver.status)
   );
+  const requesterName = (row.requester_name
+    ?? [row.requester_first_name, row.requester_last_name].filter(Boolean).join(" ").trim())
+    || row.student?.display_name
+    || row.requester_email
+    || "Requester";
 
   return {
     id: row.id,
@@ -545,17 +556,17 @@ export function mapProject(row: ProjectRow): Project {
     startDate: row.start_date ?? undefined,
     endDate: row.end_date ?? undefined,
     verifiedRequester:
-      row.requester_student_id &&
       row.requester_email &&
-      row.requester_first_name &&
-      row.requester_last_name &&
       row.requester_verified_at &&
       row.requester_auth_user_id
         ? {
-            studentId: row.requester_student_id,
+            studentId: row.requester_student_id ?? undefined,
             email: row.requester_email,
-            firstName: row.requester_first_name,
-            lastName: row.requester_last_name,
+            firstName: row.requester_first_name ?? undefined,
+            lastName: row.requester_last_name ?? undefined,
+            name: requesterName,
+            type: row.requester_type ?? undefined,
+            organization: row.requester_organization ?? undefined,
             verifiedAt: row.requester_verified_at,
             authUserId: row.requester_auth_user_id
           }
@@ -586,7 +597,7 @@ function nextActionForStatus(status: ProjectStatus): string {
     case "staff_review":
       return "Staff review";
     case "revision_required":
-      return "Student revision";
+      return "Requester revision";
     case "staff_approved":
     case "approval_pending":
     case "partially_approved":

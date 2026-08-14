@@ -29,7 +29,7 @@ function allowedRoles(pathname: string): UserRole[] | null {
   }
 
   if (pathname === "/projects/new") {
-    return ["student"];
+    return ["student", "staff", "approver", "admin"];
   }
 
   if (pathname.includes("/workflow")) {
@@ -101,7 +101,7 @@ export async function middleware(request: NextRequest) {
     ) {
       url.pathname = "/login";
       url.searchParams.set("studentEmail", user.email ?? "");
-      url.searchParams.set("studentError", "Students sign in with an email verification code.");
+      url.searchParams.set("studentError", "Requesters sign in with an email verification code.");
       return NextResponse.redirect(url);
     }
 
@@ -137,7 +137,7 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("studentEmail", user.email ?? "");
-      url.searchParams.set("studentError", "Students sign in with an email verification code.");
+      url.searchParams.set("studentError", "Requesters sign in with an email verification code.");
       return NextResponse.redirect(url);
     }
 

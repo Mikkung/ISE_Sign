@@ -71,11 +71,7 @@ export default async function ProjectWorkflowPage({
     notFound();
   }
 
-  if (role === "student") {
-    if (project.student.id !== user.id) {
-      redirect("/unauthorized");
-    }
-
+  if (project.student.id === user.id) {
     const admin = createSupabaseAdminClient();
     const { data: profileRows } = admin
       ? await admin

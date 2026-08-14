@@ -99,15 +99,15 @@ export function getProjectEditability(input: ProjectEditabilityInput): ProjectEd
     return locked("rejected", getProjectEditabilityMessage("rejected"));
   }
 
-  const isStudentOwner = input.role === "student" && input.studentId === input.userId;
+  const isRequesterOwner = input.studentId === input.userId;
   const isAuthorizedAdmin = input.role === "admin";
   const isAuthorizedStaff = input.role === "staff" && input.staffCanManage === true;
 
-  if (!isStudentOwner && !isAuthorizedAdmin && !isAuthorizedStaff) {
+  if (!isRequesterOwner && !isAuthorizedAdmin && !isAuthorizedStaff) {
     return locked(input.role === "student" ? "not_owner" : "not_authorized", getProjectEditabilityMessage(input.role === "student" ? "not_owner" : "not_authorized"));
   }
 
-  if (input.status === "revision_required" && (isStudentOwner || isAuthorizedAdmin)) {
+  if (input.status === "revision_required" && (isRequesterOwner || isAuthorizedAdmin)) {
     return { allowed: true, reason: "editable", message: getProjectEditabilityMessage("editable") };
   }
 
@@ -115,7 +115,7 @@ export function getProjectEditability(input: ProjectEditabilityInput): ProjectEd
     return locked("approval_started", getProjectEditabilityMessage("approval_started"));
   }
 
-  if (isStudentOwner && preApprovalEditableStatuses.has(input.status)) {
+  if (isRequesterOwner && preApprovalEditableStatuses.has(input.status)) {
     return { allowed: true, reason: "editable", message: getProjectEditabilityMessage("editable") };
   }
 
@@ -151,7 +151,7 @@ export function getStudentWorkflowEditability(input: ProjectEditabilityInput): P
     return locked("rejected", getProjectEditabilityMessage("rejected"));
   }
 
-  if (input.role !== "student" || input.studentId !== input.userId) {
+  if (input.studentId !== input.userId) {
     return locked(input.role === "student" ? "not_owner" : "not_authorized", getProjectEditabilityMessage(input.role === "student" ? "not_owner" : "not_authorized"));
   }
 

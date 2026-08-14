@@ -50,7 +50,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(
       new URL(
         `/login?studentEmail=${encodeURIComponent(user.email ?? "")}&studentError=${encodeURIComponent(
-          "Students sign in with an email verification code."
+          "Requesters sign in with an email verification code."
         )}`,
         url.origin
       )

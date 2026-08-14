@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { CreateProjectForm } from "./create-project-form";
-import { getAuthenticatedStudentIdentity } from "@/lib/student-directory";
+import { getAuthenticatedRequesterIdentity } from "@/lib/student-directory";
 
 export default async function NewProjectPage({
   searchParams
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const student = await getAuthenticatedStudentIdentity();
+  const requester = await getAuthenticatedRequesterIdentity();
   const { error } = await searchParams;
 
   return (
@@ -18,10 +18,10 @@ export default async function NewProjectPage({
       <div>
         <h2 className="text-2xl font-semibold text-slate-950">Create Project</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Confirm your authenticated student identity, add project details, attach supporting files, then save a draft or submit.
+          Confirm your authenticated requester identity, add project details, attach supporting files, then save a draft or submit.
         </p>
       </div>
-      <CreateProjectForm student={student} error={error} />
+      <CreateProjectForm requester={requester} error={error} />
     </div>
   );
 }

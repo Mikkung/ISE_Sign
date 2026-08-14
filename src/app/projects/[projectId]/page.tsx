@@ -47,7 +47,7 @@ export default async function ProjectDetailPage({
   const canCancel =
     Boolean(profile?.is_active !== false) &&
     cancellableProjectStatuses.includes(project.status) &&
-    (role === "admin" || (role === "student" && project.student.id === user?.id));
+    (role === "admin" || project.student.id === user?.id);
 
   return (
     <div className="space-y-6">
@@ -74,7 +74,7 @@ export default async function ProjectDetailPage({
           <h3 className="font-semibold text-slate-950">Project information</h3>
           <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2">
             <div>
-              <dt className="text-slate-500">Student</dt>
+              <dt className="text-slate-500">Requester</dt>
               <dd className="font-medium text-slate-900">{project.student.displayName}</dd>
             </div>
             <div>
@@ -103,17 +103,21 @@ export default async function ProjectDetailPage({
               <h4 className="font-semibold text-emerald-950">Verified Requester Identity</h4>
               <dl className="mt-3 grid gap-3 md:grid-cols-2">
                 <div>
-                  <dt className="text-emerald-700">Student ID</dt>
-                  <dd className="font-medium text-emerald-950">{project.verifiedRequester.studentId}</dd>
+                  <dt className="text-emerald-700">Requester Type</dt>
+                  <dd className="font-medium capitalize text-emerald-950">{project.verifiedRequester.type ?? "requester"}</dd>
+                </div>
+                {project.verifiedRequester.studentId ? (
+                  <div>
+                    <dt className="text-emerald-700">Student ID</dt>
+                    <dd className="font-medium text-emerald-950">{project.verifiedRequester.studentId}</dd>
+                  </div>
+                ) : null}
+                <div>
+                  <dt className="text-emerald-700">Requester Name</dt>
+                  <dd className="font-medium text-emerald-950">{project.verifiedRequester.name}</dd>
                 </div>
                 <div>
-                  <dt className="text-emerald-700">Student Name</dt>
-                  <dd className="font-medium text-emerald-950">
-                    {project.verifiedRequester.firstName} {project.verifiedRequester.lastName}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-emerald-700">Student Email</dt>
+                  <dt className="text-emerald-700">Requester Email</dt>
                   <dd className="font-medium text-emerald-950">{project.verifiedRequester.email}</dd>
                 </div>
                 <div>
@@ -140,7 +144,7 @@ export default async function ProjectDetailPage({
               Documents and versions
             </Link>
             <Link href={`/projects/${project.id}/workflow`} className="rounded border border-slate-300 px-3 py-2 text-center text-sm font-semibold">
-              {role === "student" ? "Edit Approval Workflow" : "Approval workflow"}
+              {project.student.id === user?.id ? "Edit Approval Workflow" : "Approval workflow"}
             </Link>
             <Link href={`/projects/${project.id}/history`} className="rounded border border-slate-300 px-3 py-2 text-center text-sm font-semibold">
               Audit history

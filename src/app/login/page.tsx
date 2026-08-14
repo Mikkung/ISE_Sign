@@ -8,8 +8,10 @@ import type { UserRole } from "@/lib/types";
 export default async function LoginPage({
   searchParams
 }: {
-  searchParams: Promise<{ error?: string; studentError?: string; studentEmail?: string; codeSent?: string }>;
+  searchParams: Promise<{ error?: string; studentError?: string; studentEmail?: string; codeSent?: string; next?: string }>;
 }) {
+  const { error, studentError, studentEmail, codeSent, next } = await searchParams;
+  const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "";
   const supabase = await createSupabaseServerClient();
   const {
     data: { user }
@@ -34,15 +36,13 @@ export default async function LoginPage({
       await supabase.auth.signOut();
       redirect(
         `/login?studentEmail=${encodeURIComponent(user.email ?? "")}&studentError=${encodeURIComponent(
-          "Students sign in with an email verification code."
+          "Requesters sign in with an email verification code."
         )}`
       );
     }
 
-    redirect(redirectPathForRole(role));
+    redirect(safeNext || redirectPathForRole(role));
   }
-
-  const { error, studentError, studentEmail, codeSent } = await searchParams;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
@@ -51,8 +51,8 @@ export default async function LoginPage({
         <h1 className="mt-2 text-2xl font-semibold text-slate-950">Sign In</h1>
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <section className="rounded border border-slate-200 p-5">
-            <h2 className="text-lg font-semibold text-slate-950">Student Sign In</h2>
-            <p className="mt-1 text-sm text-slate-500">Students sign in with a six-digit email verification code.</p>
+            <h2 className="text-lg font-semibold text-slate-950">Requester Sign In</h2>
+            <p className="mt-1 text-sm text-slate-500">Requesters sign in with a six-digit email verification code.</p>
             {studentError ? (
               <p className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {studentError}
@@ -60,18 +60,19 @@ export default async function LoginPage({
             ) : null}
             {codeSent ? (
               <p className="mt-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                If this student email can sign in, a six-digit code has been sent.
+                If this email can sign in, a six-digit code has been sent.
               </p>
             ) : null}
             <form action={sendStudentLoginCodeAction} className="mt-5 space-y-4">
+              {safeNext ? <input type="hidden" name="next" value={safeNext} /> : null}
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">Student Email</span>
+                <span className="text-sm font-medium text-slate-700">Email</span>
                 <input
                   name="email"
                   type="email"
                   autoComplete="email"
                   defaultValue={studentEmail ?? ""}
-                  placeholder="xxxxxxxxxx@student.chula.ac.th"
+                  placeholder="name@example.com"
                   required
                   className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
                 />
@@ -81,6 +82,7 @@ export default async function LoginPage({
             {codeSent ? (
               <form action={verifyStudentLoginCodeAction} className="mt-5 space-y-4">
                 <input type="hidden" name="email" value={studentEmail ?? ""} />
+                {safeNext ? <input type="hidden" name="next" value={safeNext} /> : null}
                 <label className="block">
                   <span className="text-sm font-medium text-slate-700">Verification Code</span>
                   <input
@@ -107,6 +109,7 @@ export default async function LoginPage({
               </p>
             ) : null}
             <form action={loginAction} className="mt-5 space-y-4">
+              {safeNext ? <input type="hidden" name="next" value={safeNext} /> : null}
               <label className="block">
                 <span className="text-sm font-medium text-slate-700">Email</span>
                 <input

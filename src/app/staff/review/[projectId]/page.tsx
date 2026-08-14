@@ -41,20 +41,24 @@ export default async function StaffReviewDetailPage({
             </p>
           ) : null}
           <section className="rounded border border-slate-200 bg-slate-50 p-4 text-sm">
-            <h3 className="font-semibold text-slate-950">Verified Student Identity</h3>
+            <h3 className="font-semibold text-slate-950">Verified Requester Identity</h3>
             <dl className="mt-3 grid gap-3 md:grid-cols-2">
               <div>
-                <dt className="text-slate-500">Student ID</dt>
-                <dd className="font-medium text-slate-900">{project.verifiedRequester?.studentId ?? "-"}</dd>
+                <dt className="text-slate-500">Requester Type</dt>
+                <dd className="font-medium capitalize text-slate-900">{project.verifiedRequester?.type ?? "-"}</dd>
+              </div>
+              {project.verifiedRequester?.studentId ? (
+                <div>
+                  <dt className="text-slate-500">Student ID</dt>
+                  <dd className="font-medium text-slate-900">{project.verifiedRequester.studentId}</dd>
+                </div>
+              ) : null}
+              <div>
+                <dt className="text-slate-500">Requester Name</dt>
+                <dd className="font-medium text-slate-900">{project.verifiedRequester?.name ?? "-"}</dd>
               </div>
               <div>
-                <dt className="text-slate-500">Student Name</dt>
-                <dd className="font-medium text-slate-900">
-                  {project.verifiedRequester ? `${project.verifiedRequester.firstName} ${project.verifiedRequester.lastName}` : "-"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Student Email</dt>
+                <dt className="text-slate-500">Requester Email</dt>
                 <dd className="font-medium text-slate-900">{project.verifiedRequester?.email ?? "-"}</dd>
               </div>
               <div>

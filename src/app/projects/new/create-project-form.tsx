@@ -14,7 +14,7 @@ import {
   projectTypeCategories
 } from "@/lib/project-request-validation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { AuthenticatedStudentIdentity } from "@/lib/student-directory";
+import type { AuthenticatedRequesterIdentity } from "@/lib/student-directory";
 
 function SubmitButton({
   children,
@@ -67,10 +67,10 @@ function addOneCalendarMonth(dateValue: string) {
 
 export function CreateProjectForm({
   error,
-  student
+  requester
 }: {
   error?: string;
-  student: AuthenticatedStudentIdentity | null;
+  requester: AuthenticatedRequesterIdentity | null;
 }) {
   const [projectType, setProjectType] = useState("CSR Trip");
   const [startDate, setStartDate] = useState(() => formatLocalDateInput(new Date()));
@@ -90,7 +90,7 @@ export function CreateProjectForm({
     files.length > 0 ? "attachment-list" : "",
     fileError ? "attachment-error" : ""
   ].filter(Boolean).join(" ");
-  const submitDisabled = Boolean(!student || dateError || fileError || files.length === 0);
+  const submitDisabled = Boolean(!requester || dateError || fileError || files.length === 0);
   const isSubmitting = submittingIntent !== null;
 
   function updateStartDate(value: string) {
@@ -107,8 +107,8 @@ export function CreateProjectForm({
 
     setClientError("");
 
-    if (!student) {
-      setClientError("Your signed-in student email is not active in the Student Master Database.");
+    if (!requester) {
+      setClientError("Sign in with a verified email before creating a project request.");
       return;
     }
 
@@ -223,29 +223,37 @@ export function CreateProjectForm({
   return (
     <div className="space-y-5">
       <section className="rounded border border-slate-200 bg-white p-5 shadow-panel">
-        <h3 className="font-semibold text-slate-950">Authenticated Student</h3>
-        {student ? (
+        <h3 className="font-semibold text-slate-950">Authenticated Requester</h3>
+        {requester ? (
           <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2">
             <div>
-              <dt className="text-slate-500">Student ID</dt>
-              <dd className="font-medium text-slate-900">{student.studentId}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-500">First Name</dt>
-              <dd className="font-medium text-slate-900">{student.firstName}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-500">Last Name</dt>
-              <dd className="font-medium text-slate-900">{student.lastName}</dd>
+              <dt className="text-slate-500">Name</dt>
+              <dd className="font-medium text-slate-900">{requester.displayName}</dd>
             </div>
             <div>
               <dt className="text-slate-500">Email</dt>
-              <dd className="font-medium text-slate-900">{student.email}</dd>
+              <dd className="font-medium text-slate-900">{requester.email}</dd>
             </div>
+            <div>
+              <dt className="text-slate-500">Requester Type</dt>
+              <dd className="font-medium capitalize text-slate-900">{requester.requesterType}</dd>
+            </div>
+            {requester.studentId ? (
+              <div>
+                <dt className="text-slate-500">Student ID</dt>
+                <dd className="font-medium text-slate-900">{requester.studentId}</dd>
+              </div>
+            ) : null}
+            {requester.organization ? (
+              <div>
+                <dt className="text-slate-500">Organization / Department</dt>
+                <dd className="font-medium text-slate-900">{requester.organization}</dd>
+              </div>
+            ) : null}
           </dl>
         ) : (
           <p className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            Your signed-in student email is not active in the Student Master Database.
+            Sign in with a verified email before creating a project request.
           </p>
         )}
       </section>
@@ -352,7 +360,7 @@ export function CreateProjectForm({
             value="draft"
             pendingLabel="Saving..."
             loading={submittingIntent === "draft"}
-            disabled={Boolean(!student || dateError || fileError || isSubmitting)}
+            disabled={Boolean(!requester || dateError || fileError || isSubmitting)}
           >
             Save Draft
           </SubmitButton>

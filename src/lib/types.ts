@@ -127,10 +127,13 @@ export interface ApprovalAction {
 }
 
 export interface VerifiedRequesterIdentity {
-  studentId: string;
+  studentId?: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
+  name: string;
+  type?: "student" | "staff" | "faculty" | "external" | "other";
+  organization?: string;
   verifiedAt: string;
   authUserId: string;
 }

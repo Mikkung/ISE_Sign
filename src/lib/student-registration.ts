@@ -38,6 +38,16 @@ export function validateStudentEmail(value: unknown): { ok: true; email: string 
   return { ok: true, email };
 }
 
+export function validateRequesterEmail(value: unknown): { ok: true; email: string } | { ok: false; error: string } {
+  const email = normalizeEmail(value);
+
+  if (!EMAIL_PATTERN.test(email)) {
+    return { ok: false, error: "Enter a valid email address." };
+  }
+
+  return { ok: true, email };
+}
+
 export function redirectPathForRole(role: string | null | undefined): string {
   switch (role) {
     case "student":
@@ -63,7 +73,6 @@ export function isConfirmedStudentUser(input: {
 }): boolean {
   return Boolean(
     input.emailConfirmedAt &&
-      isValidStudentEmail(input.email) &&
       input.profile?.role === "student" &&
       input.profile.isActive !== false
   );

@@ -27,7 +27,7 @@ import {
 } from "@/lib/project-request-validation";
 import { getPdfPageCount, resolveAutomaticSignaturePlacement, stampPdfWithSignature } from "@/lib/pdf-signing";
 import { parseVisualApprovalForm, signatureStoragePath } from "@/lib/signatures";
-import { findActiveStudentByEmail } from "@/lib/student-directory";
+import { getAuthenticatedRequesterIdentity } from "@/lib/student-directory";
 import {
   defaultStudentWorkflow,
   validateStudentWorkflow,
@@ -37,7 +37,6 @@ import {
 import { buildStudentWorkflowRpcSteps } from "@/lib/student-workflow-persistence";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { validateStudentEmail } from "@/lib/student-registration";
 import type { ApprovalDecision, CompletionRule, ProjectStatus, StepMode, UserRole } from "@/lib/types";
 import {
   planWorkflowAfterDecision,
@@ -59,7 +58,7 @@ const workflowStepSchema = z.object({
 const decisionSchema = z.enum(["approved", "rejected", "revision_requested"]);
 const roleSchema = z.enum(["student", "staff", "approver", "admin"]);
 const requesterIdentityErrorMessage =
-  "We could not confirm the authenticated student identity for this project. Sign in again and retry.";
+  "We could not confirm your verified requester identity for this project. Sign in again and retry.";
 const projectCreateErrorMessage = "Project could not be created. Check your details and try again.";
 const directProjectUploadErrorMessage = "Project upload could not be prepared. Check your files and try again.";
 
@@ -103,6 +102,7 @@ function isRequesterIdentityDatabaseError(message: string) {
     "Authenticated requester identity is required before submission.",
     "Authenticated student directory record is invalid or inactive.",
     "Authenticated requester does not match the project owner.",
+    "Requester email is invalid.",
     "Verified requester identity is required before submission.",
     "Verified student directory record is invalid or inactive.",
     "A valid unconsumed student email verification is required before submission."
@@ -243,23 +243,17 @@ async function requireAuthenticatedStudentRequester(
     redirect(failureUrl);
   }
 
-  const emailResult = validateStudentEmail(user.email);
-
-  if (!emailResult.ok) {
-    redirect(failureUrl);
-  }
-
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, role, is_active")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (profileError || !profile || profile.role !== "student" || profile.is_active === false) {
+  if (profileError || !profile || profile.is_active === false) {
     redirect(failureUrl);
   }
 
-  const requester = await findActiveStudentByEmail(emailResult.email);
+  const requester = await getAuthenticatedRequesterIdentity();
 
   if (!requester) {
     redirect(failureUrl);
@@ -612,7 +606,7 @@ async function recomputeWorkflowState(
       .update(
         plan.projectStatus === "rejected"
           ? { status: "rejected", rejected_at: now, current_responsible: null, updated_at: now }
-          : { status: "revision_required", current_responsible: "Student revision", updated_at: now }
+          : { status: "revision_required", current_responsible: "Requester revision", updated_at: now }
       )
       .eq("id", projectId);
 
@@ -1136,6 +1130,7 @@ export async function finalizeProjectUploadAction(input: z.infer<typeof finalize
         start_date: payload.startDate,
         end_date: payload.endDate,
         student_id: user.id,
+        requester_id: user.id,
         status: "draft",
         student_directory_id: requester.directoryId,
         student_email_verification_id: null,
@@ -1143,6 +1138,9 @@ export async function finalizeProjectUploadAction(input: z.infer<typeof finalize
         requester_email: requester.email,
         requester_first_name: requester.firstName,
         requester_last_name: requester.lastName,
+        requester_name: requester.displayName,
+        requester_type: requester.requesterType,
+        requester_organization: requester.organization,
         requester_verified_at: now,
         requester_auth_user_id: user.id
       });
@@ -1280,6 +1278,7 @@ export async function createProjectAction(formData: FormData) {
         start_date: payload.startDate,
         end_date: payload.endDate,
         student_id: user.id,
+        requester_id: user.id,
         status: "draft",
         student_directory_id: requester.directoryId,
         student_email_verification_id: null,
@@ -1287,6 +1286,9 @@ export async function createProjectAction(formData: FormData) {
         requester_email: requester.email,
         requester_first_name: requester.firstName,
         requester_last_name: requester.lastName,
+        requester_name: requester.displayName,
+        requester_type: requester.requesterType,
+        requester_organization: requester.organization,
         requester_verified_at: now,
         requester_auth_user_id: user.id
       });
@@ -1354,7 +1356,7 @@ export async function updateProjectAction(projectId: string, formData: FormData)
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id, student_id, status")
+    .select("id, student_id, requester_id, status")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -1371,7 +1373,7 @@ export async function updateProjectAction(projectId: string, formData: FormData)
     userId: user.id,
     role: profile.role,
     isActive: profile.is_active !== false,
-    studentId: project.student_id as string,
+    studentId: ((project.requester_id as string | null) ?? (project.student_id as string)),
     status: project.status as ProjectStatus
   });
 
@@ -1424,7 +1426,7 @@ export async function uploadDocumentVersionAction(projectId: string, formData: F
 
   const { data: uploadProject, error: uploadProjectError } = await supabase
     .from("projects")
-    .select("id, student_id, status")
+    .select("id, student_id, requester_id, status")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -1441,7 +1443,7 @@ export async function uploadDocumentVersionAction(projectId: string, formData: F
     userId: user.id,
     role: profile.role,
     isActive: profile.is_active !== false,
-    studentId: uploadProject.student_id as string,
+    studentId: ((uploadProject.requester_id as string | null) ?? (uploadProject.student_id as string)),
     status: uploadProject.status as ProjectStatus
   });
 
@@ -1555,7 +1557,7 @@ export async function submitProjectAction(projectId: string) {
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id, student_id, status, submitted_at")
+    .select("id, student_id, requester_id, status, submitted_at")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -1564,7 +1566,9 @@ export async function submitProjectAction(projectId: string) {
     redirect(projectDocumentsUrl(projectId, { error: "Project could not be submitted. Check the documents and try again." }));
   }
 
-  if (!project || project.student_id !== user.id) {
+  const requesterOwnerId = (project?.requester_id as string | null) ?? (project?.student_id as string | null);
+
+  if (!project || requesterOwnerId !== user.id) {
     redirect(projectDocumentsUrl(projectId, { error: "You can only submit your own project." }));
   }
 
@@ -1575,12 +1579,16 @@ export async function submitProjectAction(projectId: string) {
       status: "submitted",
       submitted_at: project.submitted_at ?? now,
       updated_at: now,
+      requester_id: user.id,
       student_directory_id: requester.directoryId,
       student_email_verification_id: null,
       requester_student_id: requester.studentId,
       requester_email: requester.email,
       requester_first_name: requester.firstName,
       requester_last_name: requester.lastName,
+      requester_name: requester.displayName,
+      requester_type: requester.requesterType,
+      requester_organization: requester.organization,
       requester_verified_at: now,
       requester_auth_user_id: user.id
     })
@@ -1728,10 +1736,6 @@ export async function saveStudentWorkflowAction(projectId: string, formData: For
   const supabase = await requireSupabase();
   const { user, profile } = await getCurrentProfile(supabase);
 
-  if (profile.role !== "student") {
-    redirect(studentWorkflowUrl(projectId, { error: "Only the project requester can use the Student workflow editor." }));
-  }
-
   const admin = createSupabaseAdminClient();
 
   if (!admin) {
@@ -1740,7 +1744,7 @@ export async function saveStudentWorkflowAction(projectId: string, formData: For
 
   const { data: project, error: projectError } = await admin
     .from("projects")
-    .select("id, status, student_id")
+    .select("id, status, student_id, requester_id")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -1748,7 +1752,9 @@ export async function saveStudentWorkflowAction(projectId: string, formData: For
     throw new Error(projectError.message);
   }
 
-  if (!project || project.student_id !== user.id) {
+  const workflowOwnerId = (project?.requester_id as string | null) ?? (project?.student_id as string | null);
+
+  if (!project || workflowOwnerId !== user.id) {
     redirect(studentWorkflowUrl(projectId, { error: "You can edit only your own project workflow." }));
   }
 
@@ -1757,7 +1763,7 @@ export async function saveStudentWorkflowAction(projectId: string, formData: For
     userId: user.id,
     role: profile.role,
     isActive: profile.is_active !== false,
-    studentId: project.student_id as string,
+    studentId: workflowOwnerId,
     status: project.status as ProjectStatus
   });
 
@@ -2656,7 +2662,7 @@ async function recordApprovalDecision(input: {
   const projectId = assignment.step.project_id as string;
   const { data: decisionProject, error: decisionProjectError } = await input.supabase
     .from("projects")
-    .select("status")
+    .select("status, student_id, requester_id")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -2666,6 +2672,12 @@ async function recordApprovalDecision(input: {
 
   if (decisionProject?.status === "cancelled") {
     throw new Error("This project has been cancelled and can no longer be approved.");
+  }
+
+  const decisionProjectOwnerId = (decisionProject?.requester_id as string | null) ?? (decisionProject?.student_id as string | null);
+
+  if (decisionProjectOwnerId === input.user.id) {
+    throw new Error("Requesters cannot approve their own project.");
   }
 
   const documentVersion = input.documentVersionOverride ?? await getLatestActiveDocumentVersion(input.supabase, projectId);
