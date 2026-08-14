@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProject, listProjectAuditLogs } from "@/lib/data";
 
@@ -13,6 +14,9 @@ export default async function ProjectHistoryPage({ params }: { params: Promise<{
 
   return (
     <div className="space-y-5">
+      <Link href={`/projects/${project.id}`} className="inline-flex text-sm font-semibold text-ise-maroon hover:underline">
+        ← Back to Project
+      </Link>
       <h2 className="text-2xl font-semibold text-slate-950">Project History</h2>
       <div className="rounded border border-slate-200 bg-white p-4">
         <ol className="space-y-4">

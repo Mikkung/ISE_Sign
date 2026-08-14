@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { approvalDecisionAction, markAssignmentOpenedAction } from "@/app/actions/projects";
 import { PdfSignatureEditor } from "@/components/signing/pdf-signature-editor";
 import { certificationStatement } from "@/lib/constants";
@@ -70,6 +71,9 @@ export default async function ApprovalDetailPage({
 
   return (
     <div className="space-y-5">
+      <Link href="/approvals" className="inline-flex text-sm font-semibold text-ise-maroon hover:underline">
+        ← Back to My Approvals
+      </Link>
       <div>
         <h2 className="text-2xl font-semibold text-slate-950">{match.project.title}</h2>
         <p className="mt-1 text-sm text-slate-500">{match.step.name}</p>

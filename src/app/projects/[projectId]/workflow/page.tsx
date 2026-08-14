@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   activateWorkflowAction,
@@ -123,6 +124,9 @@ export default async function ProjectWorkflowPage({
 
     return (
       <div className="space-y-5">
+        <Link href={`/projects/${project.id}`} className="inline-flex text-sm font-semibold text-ise-maroon hover:underline">
+          ← Back to Project
+        </Link>
         <div>
           <h2 className="text-2xl font-semibold text-slate-950">Edit Approval Workflow</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -164,6 +168,9 @@ export default async function ProjectWorkflowPage({
 
   return (
     <div className="space-y-5">
+      <Link href={`/projects/${project.id}`} className="inline-flex text-sm font-semibold text-ise-maroon hover:underline">
+        ← Back to Project
+      </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-2xl font-semibold text-slate-950">Approval workflow</h2>

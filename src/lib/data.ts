@@ -64,6 +64,8 @@ export interface ApprovalAssignmentDetail {
   project: Project;
   step: WorkflowStep;
   assignment: WorkflowApprover;
+  actionable: boolean;
+  blockingStep?: WorkflowStep;
 }
 
 type UnitRow = { name: string | null } | null;
@@ -699,15 +701,41 @@ export async function listProfiles() {
 }
 
 export async function listApprovalAssignments(): Promise<ApprovalAssignmentDetail[]> {
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return [];
+  }
+
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
   const projects = await listProjects();
 
   return projects.flatMap((project) =>
     project.workflow.flatMap((step) =>
       step.approvers
         .filter((assignment) =>
-          step.status === "in_progress" && ["waiting", "opened"].includes(assignment.status)
+          assignment.profile.id === user.id && ["waiting", "opened"].includes(assignment.status)
         )
-        .map((assignment) => ({ project, step, assignment }))
+        .map((assignment) => {
+          const blockingStep = project.workflow
+            .filter((candidate) => candidate.order < step.order)
+            .find((candidate) => !["completed", "approved", "skipped"].includes(candidate.status));
+
+          return {
+            project,
+            step,
+            assignment,
+            actionable: step.status === "in_progress",
+            blockingStep
+          };
+        })
     )
   );
 }

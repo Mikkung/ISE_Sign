@@ -9,6 +9,7 @@ const publicApiPrefixes = ["/api/reminders/run"];
 
 function isPublicPath(pathname: string) {
   return (
+    pathname === "/" ||
     publicPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ||
     publicApiPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
   );

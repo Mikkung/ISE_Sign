@@ -46,6 +46,25 @@ function SubmitButton({
   );
 }
 
+function formatLocalDateInput(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addOneCalendarMonth(dateValue: string) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+  const start = new Date(year, month - 1, day);
+  const next = new Date(year, month, day);
+
+  if (next.getDate() !== start.getDate()) {
+    next.setDate(0);
+  }
+
+  return formatLocalDateInput(next);
+}
+
 export function CreateProjectForm({
   error,
   student
@@ -54,8 +73,9 @@ export function CreateProjectForm({
   student: AuthenticatedStudentIdentity | null;
 }) {
   const [projectType, setProjectType] = useState("CSR Trip");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(() => formatLocalDateInput(new Date()));
+  const [endDate, setEndDate] = useState(() => addOneCalendarMonth(formatLocalDateInput(new Date())));
+  const [endDateEdited, setEndDateEdited] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [submittingIntent, setSubmittingIntent] = useState<"draft" | "submit" | null>(null);
   const [clientError, setClientError] = useState("");
@@ -72,6 +92,13 @@ export function CreateProjectForm({
   ].filter(Boolean).join(" ");
   const submitDisabled = Boolean(!student || dateError || fileError || files.length === 0);
   const isSubmitting = submittingIntent !== null;
+
+  function updateStartDate(value: string) {
+    setStartDate(value);
+    if (!endDateEdited && value) {
+      setEndDate(addOneCalendarMonth(value));
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -267,11 +294,21 @@ export function CreateProjectForm({
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
             <span className="text-sm font-medium text-slate-700">Start Date</span>
-            <input name="startDate" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} required className="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
+            <input name="startDate" type="date" value={startDate} onChange={(event) => updateStartDate(event.target.value)} required className="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
           </label>
           <label className="block">
             <span className="text-sm font-medium text-slate-700">End Date</span>
-            <input name="endDate" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} required className="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
+            <input
+              name="endDate"
+              type="date"
+              value={endDate}
+              onChange={(event) => {
+                setEndDateEdited(true);
+                setEndDate(event.target.value);
+              }}
+              required
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            />
           </label>
         </div>
         {dateError ? <p className="text-sm text-red-700">{dateError}</p> : null}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { addSharedCommentAction, cancelProjectAction, submitProjectAction } from "@/app/actions/projects";
+import { ApprovalStatusCard } from "@/components/approval-status-card";
 import { ProjectCancelDialog } from "@/components/project-cancel-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { WorkflowTimeline } from "@/components/workflow-timeline";
@@ -50,6 +51,9 @@ export default async function ProjectDetailPage({
 
   return (
     <div className="space-y-6">
+      <Link href="/projects" className="inline-flex text-sm font-semibold text-ise-maroon hover:underline">
+        ← Back to Projects
+      </Link>
       {error ? (
         <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>
       ) : null}
@@ -64,6 +68,7 @@ export default async function ProjectDetailPage({
         </div>
         <StatusBadge status={project.status} />
       </div>
+      <ApprovalStatusCard project={project} viewerRole={role} />
       <div className="grid gap-4 lg:grid-cols-3">
         <section className="rounded border border-slate-200 bg-white p-4 shadow-panel lg:col-span-2">
           <h3 className="font-semibold text-slate-950">Project information</h3>
