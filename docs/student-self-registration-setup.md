@@ -1,5 +1,7 @@
 # Student Self-Registration Setup
 
+This document is retained for migration history. The active student authentication flow is passwordless Supabase email OTP on `/login`; see `docs/authentication-flow.md`. Do not expose the old `/register/student` registration form.
+
 This project supports public student self-registration only for verified Chulalongkorn University student email addresses ending exactly with:
 
 ```text
@@ -181,4 +183,3 @@ Prefer Dashboard disablement over replacing the SQL function with a permissive i
 10. Confirm redirect to `/dashboard`.
 11. Confirm `/staff/review` and `/admin/users` redirect to `/unauthorized`.
 12. Create a project as the student.
-

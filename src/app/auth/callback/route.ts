@@ -47,7 +47,14 @@ export async function GET(request: Request) {
     })
   ) {
     await supabase.auth.signOut();
-    return NextResponse.redirect(new URL(`/verify-email?email=${encodeURIComponent(user.email ?? "")}`, url.origin));
+    return NextResponse.redirect(
+      new URL(
+        `/login?studentEmail=${encodeURIComponent(user.email ?? "")}&studentError=${encodeURIComponent(
+          "Students sign in with an email verification code."
+        )}`,
+        url.origin
+      )
+    );
   }
 
   return NextResponse.redirect(new URL(redirectPathForRole(role), url.origin));

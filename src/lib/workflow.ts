@@ -101,16 +101,14 @@ export function nextProjectStatus(project: Pick<Project, "status" | "workflow">)
     return "completed";
   }
 
-  if (project.workflow.some((step) => step.approvers.some((approver) => approver.status === "approved"))) {
-    return "partially_approved";
-  }
-
   return project.workflow.length > 0 ? "approval_pending" : project.status;
 }
 
-export function shouldReturnRevisionToStaff(actions: ApprovalAction[]): boolean {
+export function shouldReturnRevisionToFirstStep(actions: ApprovalAction[]): boolean {
   return !actions.some((action) => action.decision === "approved");
 }
+
+export const shouldReturnRevisionToStaff = shouldReturnRevisionToFirstStep;
 
 export function validApprovalCount(actions: ApprovalAction[]): number {
   return actions.filter((action) => action.decision === "approved" && !action.invalidatedAt).length;

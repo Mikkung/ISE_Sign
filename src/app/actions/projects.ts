@@ -1,48 +1,113 @@
 "use server";
 
 import { randomUUID } from "crypto";
-import { cookies } from "next/headers";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createDocumentHash, createVerificationCode } from "@/lib/certificates";
 import { certificationStatement } from "@/lib/constants";
-import { createEmailProvider } from "@/lib/email";
+import { validateCancellationReason } from "@/lib/project-cancellation";
+import { getStaleProjectEditMessage } from "@/lib/project-editability";
+import { getProjectEditabilityForUser, getStudentWorkflowEditabilityForUser } from "@/lib/project-editability.server";
+import {
+  buildDefaultWorkflowPlan,
+  defaultFacultyApprovalStepName,
+  defaultStaffReviewStepName
+} from "@/lib/default-workflow";
 import {
   allowedAttachmentMimeTypes,
-  buildStudentVerificationEmail,
-  canSendVerificationCode,
-  createVerificationSalt,
-  generateSixDigitCode,
-  getVerificationRecordState,
-  hashSessionBinding,
-  hashVerificationCode,
+  getProjectAttachments,
   maxAttachmentBytes,
   normalizeProjectType,
+  projectAttachmentFieldName,
   projectRequestSchema,
-  validateStudentDirectoryRecord,
-  validateStudentEmailForSignedInAccount,
-  verificationCodeMaxAttempts,
-  verificationCodeSchema,
-  verificationCodeTtlMinutes,
-  verifyVerificationCodeHash
+  validateProjectAttachments,
+  validateProjectAttachmentMetadata,
 } from "@/lib/project-request-validation";
+import { getPdfPageCount, resolveAutomaticSignaturePlacement, stampPdfWithSignature } from "@/lib/pdf-signing";
+import { parseVisualApprovalForm, signatureStoragePath } from "@/lib/signatures";
+import { findActiveStudentByEmail } from "@/lib/student-directory";
+import {
+  defaultStudentWorkflow,
+  validateStudentWorkflow,
+  type StudentWorkflowStepInput,
+  type WorkflowProfileOption
+} from "@/lib/student-workflow";
+import { buildStudentWorkflowRpcSteps } from "@/lib/student-workflow-persistence";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { ApprovalDecision, CompletionRule, StepMode, UserRole } from "@/lib/types";
+import { validateStudentEmail } from "@/lib/student-registration";
+import type { ApprovalDecision, CompletionRule, ProjectStatus, StepMode, UserRole } from "@/lib/types";
+import {
+  planWorkflowAfterDecision,
+  type WorkflowExecutionAssignmentStatus,
+  type WorkflowExecutionStep
+} from "@/lib/workflow-execution";
 
 const uuidSchema = z.string().uuid();
 const workflowStepSchema = z.object({
   name: z.string().trim().min(2),
+  role: z.enum(["staff", "approver", "admin"]).default("staff"),
   mode: z.enum(["sequential", "parallel"]),
   completionRule: z.enum(["all", "any", "minimum"]),
   minimumApprovals: z.coerce.number().int().min(1).optional(),
+  requiresSignature: z.coerce.boolean().optional(),
   dueAt: z.string().optional(),
   reason: z.string().trim().optional()
 });
 const decisionSchema = z.enum(["approved", "rejected", "revision_requested"]);
 const roleSchema = z.enum(["student", "staff", "approver", "admin"]);
+const requesterIdentityErrorMessage =
+  "We could not confirm the authenticated student identity for this project. Sign in again and retry.";
+const projectCreateErrorMessage = "Project could not be created. Check your details and try again.";
+const directProjectUploadErrorMessage = "Project upload could not be prepared. Check your files and try again.";
+
+function newProjectUrl(params: Record<string, string>) {
+  const search = new URLSearchParams(params);
+  return `/projects/new?${search.toString()}`;
+}
+
+function projectDocumentsUrl(projectId: string, params: Record<string, string>) {
+  const search = new URLSearchParams(params);
+  return `/projects/${projectId}/documents?${search.toString()}`;
+}
+
+function projectEditUrl(projectId: string, params: Record<string, string>) {
+  const search = new URLSearchParams(params);
+  return `/projects/${projectId}/edit?${search.toString()}`;
+}
+
+function staffReviewUrl(projectId: string, params: Record<string, string>) {
+  const search = new URLSearchParams(params);
+  return `/staff/review/${projectId}?${search.toString()}`;
+}
+
+function workflowUrl(projectId: string, params: Record<string, string>) {
+  const search = new URLSearchParams(params);
+  return `/projects/${projectId}/workflow?${search.toString()}`;
+}
+
+function projectUrl(projectId: string, params: Record<string, string>) {
+  const search = new URLSearchParams(params);
+  return `/projects/${projectId}?${search.toString()}`;
+}
+
+function approvalUrl(assignmentId: string, params: Record<string, string>) {
+  const search = new URLSearchParams(params);
+  return `/approvals/${assignmentId}?${search.toString()}`;
+}
+
+function isRequesterIdentityDatabaseError(message: string) {
+  return [
+    "Authenticated requester identity is required before submission.",
+    "Authenticated student directory record is invalid or inactive.",
+    "Authenticated requester does not match the project owner.",
+    "Verified requester identity is required before submission.",
+    "Verified student directory record is invalid or inactive.",
+    "A valid unconsumed student email verification is required before submission."
+  ].some((knownMessage) => message.includes(knownMessage));
+}
 
 type ApprovalAssignmentRow = {
   id: string;
@@ -56,6 +121,11 @@ type ApprovalAssignmentRow = {
     status: string;
     certification_required: boolean;
     revision_allowed: boolean;
+    project?: {
+      code: string | null;
+      title: string | null;
+      status: string | null;
+    } | null;
   } | null;
 };
 type ActiveAssignmentNotificationRow = {
@@ -71,9 +141,70 @@ type ActivatableStepRow = {
   step_order: number;
   workflow_assignments?: Array<{ id: string }> | null;
 };
+type DefaultWorkflowResult =
+  | {
+      ok: true;
+      created: boolean;
+      staffAssignmentCount: number;
+      facultyAssignmentCount: number;
+    }
+  | {
+      ok: false;
+      message: string;
+    };
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "document";
+}
+
+const projectAttachmentMetadataSchema = z.object({
+  clientFileId: z.string().min(1).max(240),
+  name: z.string().min(1).max(255),
+  size: z.coerce.number().int().positive(),
+  type: z.string().min(1).max(180)
+});
+
+const preparedProjectAttachmentSchema = projectAttachmentMetadataSchema.extend({
+  documentId: uuidSchema,
+  storagePath: z.string().min(1).max(700)
+});
+
+const directProjectUploadSchema = z.object({
+  title: z.string(),
+  abstract: z.string().optional(),
+  academicProgram: z.string().optional(),
+  projectTypeCategory: z.string(),
+  projectTypeCustom: z.string().optional(),
+  startDate: z.string(),
+  endDate: z.string(),
+  intent: z.enum(["draft", "submit"]),
+  files: z.array(projectAttachmentMetadataSchema).max(12)
+});
+
+const finalizeProjectUploadSchema = directProjectUploadSchema.extend({
+  projectId: uuidSchema,
+  files: z.array(preparedProjectAttachmentSchema).max(12)
+});
+
+function parseDirectProjectPayload(input: z.infer<typeof directProjectUploadSchema>) {
+  return projectRequestSchema.safeParse({
+    title: input.title,
+    abstract: input.abstract,
+    academicProgram: input.academicProgram,
+    projectTypeCategory: input.projectTypeCategory,
+    projectTypeCustom: input.projectTypeCustom,
+    startDate: input.startDate,
+    endDate: input.endDate,
+    intent: input.intent
+  });
+}
+
+function isExpectedProjectStoragePath(input: {
+  projectId: string;
+  documentId: string;
+  storagePath: string;
+}) {
+  return input.storagePath.startsWith(`${input.projectId}/${input.documentId}/v1-`);
 }
 
 async function requireSupabase() {
@@ -99,11 +230,49 @@ async function requireCurrentUser(supabase: Awaited<ReturnType<typeof requireSup
   return user;
 }
 
+async function requireAuthenticatedStudentRequester(
+  supabase: Awaited<ReturnType<typeof requireSupabase>>,
+  failureUrl: string
+) {
+  const {
+    data: { user },
+    error: userError
+  } = await supabase.auth.getUser();
+
+  if (userError || !user?.email) {
+    redirect(failureUrl);
+  }
+
+  const emailResult = validateStudentEmail(user.email);
+
+  if (!emailResult.ok) {
+    redirect(failureUrl);
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError || !profile || profile.role !== "student" || profile.is_active === false) {
+    redirect(failureUrl);
+  }
+
+  const requester = await findActiveStudentByEmail(emailResult.email);
+
+  if (!requester) {
+    redirect(failureUrl);
+  }
+
+  return { user, requester };
+}
+
 async function getCurrentProfile(supabase: Awaited<ReturnType<typeof requireSupabase>>) {
   const user = await requireCurrentUser(supabase);
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, email, role, position")
+    .select("id, display_name, email, role, position, is_active")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -123,6 +292,7 @@ async function getCurrentProfile(supabase: Awaited<ReturnType<typeof requireSupa
       email: string;
       role: UserRole;
       position: string | null;
+      is_active: boolean | null;
     }
   };
 }
@@ -169,64 +339,6 @@ async function audit(
     entity_type: entityType,
     entity_id: entityId,
     metadata
-  });
-}
-
-function requireAdminClient() {
-  const admin = createSupabaseAdminClient();
-
-  if (!admin) {
-    throw new Error("Server-side Supabase service access is not configured.");
-  }
-
-  return admin;
-}
-
-function requireVerificationPepper() {
-  const pepper = process.env.STUDENT_VERIFICATION_PEPPER;
-
-  if (!pepper) {
-    throw new Error("Student verification is not configured.");
-  }
-
-  return pepper;
-}
-
-async function getVerificationSessionFingerprint() {
-  const pepper = requireVerificationPepper();
-  const cookieStore = await cookies();
-  let sessionId = cookieStore.get("student_project_session_id")?.value;
-
-  if (!sessionId) {
-    sessionId = randomUUID();
-    cookieStore.set("student_project_session_id", sessionId, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60,
-      path: "/projects/new"
-    });
-  }
-
-  return hashSessionBinding(sessionId, pepper);
-}
-
-async function logVerificationEmailDelivery(input: {
-  supabase: Awaited<ReturnType<typeof requireSupabase>>;
-  userId: string;
-  subject: string;
-  status: "sent" | "failed";
-  provider: string;
-}) {
-  await input.supabase.from("notification_logs").insert({
-    recipient_id: input.userId,
-    channel: "email",
-    type: "student_email_verification",
-    subject: input.subject,
-    body: `Student project verification code delivery ${input.status} through ${input.provider}.`,
-    status: input.status,
-    sent_at: input.status === "sent" ? new Date().toISOString() : null,
-    dedupe_key: `${input.userId}:student-email-verification:${Date.now()}`
   });
 }
 
@@ -294,80 +406,33 @@ async function uploadProjectAttachment(input: {
     throw new Error(versionError.message);
   }
 
-  return { documentId, sha256Hash };
+  return { documentId, sha256Hash, storagePath };
 }
 
-async function requireVerifiedRequester(input: {
+async function cleanupFailedNewProject(input: {
+  projectId: string;
+  storagePaths: string[];
+  supabase: Awaited<ReturnType<typeof requireSupabase>>;
   userId: string;
-  signedInEmail?: string | null;
-  enteredEmail: string;
-  verificationId?: string;
 }) {
-  const emailCheck = validateStudentEmailForSignedInAccount({
-    enteredEmail: input.enteredEmail,
-    signedInEmail: input.signedInEmail
-  });
+  try {
+    if (input.storagePaths.length > 0) {
+      await input.supabase.storage.from("project-documents").remove(input.storagePaths);
+    }
 
-  if (!emailCheck.ok) {
-    throw new Error(emailCheck.error);
+    const admin = createSupabaseAdminClient();
+
+    if (admin) {
+      await admin.from("projects").delete().eq("id", input.projectId).eq("student_id", input.userId);
+    } else {
+      await input.supabase.from("projects").delete().eq("id", input.projectId).eq("student_id", input.userId);
+    }
+  } catch (cleanupError) {
+    console.error("Project creation cleanup failed", {
+      projectId: input.projectId,
+      message: cleanupError instanceof Error ? cleanupError.message : "Unknown cleanup error"
+    });
   }
-
-  if (!input.verificationId) {
-    throw new Error("Verify your student email before submitting the project.");
-  }
-
-  const admin = requireAdminClient();
-  const sessionFingerprint = await getVerificationSessionFingerprint();
-  const { data: verification, error: verificationError } = await admin
-    .from("student_email_verifications")
-    .select("id, user_id, email, expires_at, verified_at, consumed_at, session_fingerprint")
-    .eq("id", input.verificationId)
-    .maybeSingle();
-
-  if (verificationError) {
-    throw new Error(verificationError.message);
-  }
-
-  if (
-    !verification ||
-    verification.user_id !== input.userId ||
-    verification.email !== emailCheck.email ||
-    verification.session_fingerprint !== sessionFingerprint ||
-    !verification.verified_at ||
-    verification.consumed_at ||
-    new Date(verification.expires_at).getTime() <= Date.now()
-  ) {
-    throw new Error("Verify your student email before submitting the project.");
-  }
-
-  const { data: student, error: studentError } = await admin
-    .from("student_directory")
-    .select("id, student_id, email, first_name, last_name, is_active")
-    .eq("student_id", emailCheck.studentId)
-    .eq("email", emailCheck.email)
-    .maybeSingle();
-
-  if (studentError) {
-    throw new Error(studentError.message);
-  }
-
-  if (!student || !validateStudentDirectoryRecord({
-    studentId: student.student_id,
-    email: student.email,
-    isActive: student.is_active
-  })) {
-    throw new Error("We could not verify an active student directory record for this email.");
-  }
-
-  return {
-    verificationId: verification.id as string,
-    verifiedAt: verification.verified_at as string,
-    directoryId: student.id as string,
-    studentId: student.student_id as string,
-    email: student.email as string,
-    firstName: student.first_name as string,
-    lastName: student.last_name as string
-  };
 }
 
 async function getLatestActiveDocumentVersion(
@@ -391,7 +456,7 @@ async function getLatestActiveDocumentVersion(
 
   const { data, error } = await supabase
     .from("project_document_versions")
-    .select("id, document_id, version_number, sha256_hash, storage_bucket, storage_path")
+    .select("id, document_id, version_number, sha256_hash, storage_bucket, storage_path, original_file_name, mime_type, file_size")
     .in("document_id", documentIds)
     .eq("active", true)
     .order("uploaded_at", { ascending: false })
@@ -410,6 +475,9 @@ async function getLatestActiveDocumentVersion(
         sha256_hash: string;
         storage_bucket: string;
         storage_path: string;
+        original_file_name: string;
+        mime_type: string;
+        file_size: number;
       }
     | null;
 }
@@ -438,7 +506,9 @@ async function ensureCertificate(
     return;
   }
 
-  await supabase.from("certificates").upsert(
+  const certificateClient = createSupabaseAdminClient() ?? supabase;
+
+  await certificateClient.from("certificates").upsert(
     {
       project_id: projectId,
       document_version_id: documentVersion.id,
@@ -450,30 +520,14 @@ async function ensureCertificate(
   );
 }
 
-function isStepSatisfied(step: {
-  completion_rule: CompletionRule;
-  minimum_approvals: number | null;
-  workflow_assignments: Array<{ id: string; status: string }>;
-}) {
-  const approved = step.workflow_assignments.filter((assignment) => assignment.status === "approved").length;
-
-  switch (step.completion_rule) {
-    case "all":
-      return step.workflow_assignments.length > 0 && approved === step.workflow_assignments.length;
-    case "any":
-      return approved >= 1;
-    case "minimum":
-      return approved >= (step.minimum_approvals ?? step.workflow_assignments.length);
-  }
-}
-
 async function recomputeWorkflowState(
   supabase: Awaited<ReturnType<typeof requireSupabase>>,
   projectId: string
 ) {
-  const { data, error } = await supabase
+  const workflowClient = createSupabaseAdminClient() ?? supabase;
+  const { data, error } = await workflowClient
     .from("workflow_steps")
-    .select("id, step_order, completion_rule, minimum_approvals, workflow_assignments(id, status)")
+    .select("id, step_order, name, status, activated_at, started_at, completion_rule, minimum_approvals, workflow_assignments(id, status)")
     .eq("project_id", projectId)
     .order("step_order", { ascending: true });
 
@@ -484,80 +538,110 @@ async function recomputeWorkflowState(
   const steps = (data ?? []) as Array<{
     id: string;
     step_order: number;
+    name: string;
+    status: string;
+    activated_at: string | null;
+    started_at: string | null;
     completion_rule: CompletionRule;
     minimum_approvals: number | null;
     workflow_assignments: Array<{ id: string; status: string }>;
   }>;
 
-  const rejectedStep = steps.find((step) =>
-    step.workflow_assignments.some((assignment) => assignment.status === "rejected")
-  );
-  const revisionStep = steps.find((step) =>
-    step.workflow_assignments.some((assignment) => assignment.status === "revision_requested")
-  );
+  const plan = planWorkflowAfterDecision(steps.map((step) => ({
+    id: step.id,
+    order: step.step_order,
+    status: step.status as WorkflowExecutionStep["status"],
+    completionRule: step.completion_rule,
+    minimumApprovals: step.minimum_approvals,
+    assignments: step.workflow_assignments.map((assignment) => ({
+      id: assignment.id,
+      status: assignment.status as WorkflowExecutionAssignmentStatus
+    }))
+  })));
+  const now = new Date().toISOString();
 
-  if (rejectedStep || revisionStep) {
-    const terminalStep = rejectedStep ?? revisionStep;
-    const status = rejectedStep ? "rejected" : "revision_required";
-    await supabase.from("workflow_steps").update({ status }).eq("id", terminalStep?.id);
-    await supabase.from("projects").update({ status, updated_at: new Date().toISOString() }).eq("id", projectId);
-    return;
-  }
-
-  let activeStepId: string | null = null;
-  let hasApprovedAssignment = false;
-  let allComplete = steps.length > 0;
-
-  for (const step of steps) {
-    const complete = isStepSatisfied(step);
-    hasApprovedAssignment ||= step.workflow_assignments.some((assignment) => assignment.status === "approved");
-
-    if (complete) {
-      await supabase.from("workflow_steps").update({ status: "completed", completed_at: new Date().toISOString() }).eq("id", step.id);
-
-      if (step.completion_rule !== "all") {
-        const staleAssignmentIds = step.workflow_assignments
-          .filter((assignment) => ["waiting", "opened"].includes(assignment.status))
-          .map((assignment) => assignment.id);
-
-        if (staleAssignmentIds.length > 0) {
-          await supabase
-            .from("workflow_assignments")
-            .update({ status: "invalidated", invalidated_at: new Date().toISOString() })
-            .in("id", staleAssignmentIds);
-        }
-      }
-
-      continue;
+  for (const update of plan.stepUpdates) {
+    const payload: Record<string, string | null> = { status: update.status, updated_at: now };
+    if (update.completed) {
+      payload.completed_at = now;
+    }
+    if (update.active) {
+      const step = steps.find((candidate) => candidate.id === update.id);
+      payload.activated_at = step?.activated_at ?? now;
+      payload.started_at = step?.started_at ?? now;
     }
 
-    allComplete = false;
+    const { error: stepUpdateError } = await workflowClient
+      .from("workflow_steps")
+      .update(payload)
+      .eq("id", update.id);
 
-    if (!activeStepId) {
-      activeStepId = step.id;
-      await supabase.from("workflow_steps").update({ status: "in_progress" }).eq("id", step.id);
-    } else {
-      await supabase.from("workflow_steps").update({ status: "waiting" }).eq("id", step.id);
+    if (stepUpdateError) {
+      throw new Error(stepUpdateError.message);
     }
   }
 
-  if (allComplete) {
-    const completedAt = new Date().toISOString();
-    await supabase
+  if (plan.invalidateAssignmentIds.length > 0) {
+    const { error: invalidateError } = await workflowClient
+      .from("workflow_assignments")
+      .update({ status: "invalidated", invalidated_at: now })
+      .in("id", plan.invalidateAssignmentIds);
+
+    if (invalidateError) {
+      throw new Error(invalidateError.message);
+    }
+  }
+
+  if (plan.projectStatus === "completed") {
+    const { error: projectUpdateError } = await workflowClient
       .from("projects")
-      .update({ status: "completed", completed_at: completedAt, updated_at: completedAt })
+      .update({ status: "completed", completed_at: now, current_responsible: null, updated_at: now })
       .eq("id", projectId);
-    await ensureCertificate(supabase, projectId);
+
+    if (projectUpdateError) {
+      throw new Error(projectUpdateError.message);
+    }
+
+    await ensureCertificate(workflowClient, projectId);
     return;
   }
 
-  await supabase
+  if (plan.projectStatus === "rejected" || plan.projectStatus === "revision_required") {
+    const { error: projectUpdateError } = await workflowClient
+      .from("projects")
+      .update(
+        plan.projectStatus === "rejected"
+          ? { status: "rejected", rejected_at: now, current_responsible: null, updated_at: now }
+          : { status: "revision_required", current_responsible: "Student revision", updated_at: now }
+      )
+      .eq("id", projectId);
+
+    if (projectUpdateError) {
+      throw new Error(projectUpdateError.message);
+    }
+
+    return;
+  }
+
+  const currentResponsible = plan.activeStepId
+    ? `Waiting for ${steps.find((step) => step.id === plan.activeStepId)?.name ?? "next step"}`
+    : null;
+  const { error: projectUpdateError } = await workflowClient
     .from("projects")
     .update({
-      status: hasApprovedAssignment ? "partially_approved" : "approval_pending",
-      updated_at: new Date().toISOString()
+      status: "approval_pending",
+      current_responsible: currentResponsible,
+      updated_at: now
     })
     .eq("id", projectId);
+
+  if (projectUpdateError) {
+    throw new Error(projectUpdateError.message);
+  }
+
+  if (plan.activeStepId) {
+    await notifyActiveStep(workflowClient, projectId, plan.activeStepId);
+  }
 }
 
 async function createInAppNotification(
@@ -629,269 +713,478 @@ async function notifyActiveStep(
   );
 }
 
-export async function sendStudentProjectVerificationCodeAction(formData: FormData) {
-  const supabase = await requireSupabase();
-  const { user, profile } = await getCurrentProfile(supabase);
-  requireRole(profile.role, ["student"]);
-
-  const emailCheck = validateStudentEmailForSignedInAccount({
-    enteredEmail: formData.get("studentEmail"),
-    signedInEmail: user.email
-  });
-
-  if (!emailCheck.ok) {
-    redirect(`/projects/new?studentEmailError=${encodeURIComponent(emailCheck.error)}`);
+async function notifyAssignmentsById(
+  supabase: Awaited<ReturnType<typeof requireSupabase>>,
+  projectId: string,
+  assignmentIds: string[]
+) {
+  if (assignmentIds.length === 0) {
+    return;
   }
 
-  const admin = requireAdminClient();
-  const sessionFingerprint = await getVerificationSessionFingerprint();
-  const now = new Date();
-  const { data: latest, error: latestError } = await admin
-    .from("student_email_verifications")
-    .select("id, sent_at")
-    .eq("user_id", user.id)
-    .eq("email", emailCheck.email)
-    .order("sent_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (latestError) {
-    throw new Error(latestError.message);
-  }
-
-  if (!canSendVerificationCode({ lastSentAt: latest?.sent_at ?? null, now })) {
-    redirect(
-      `/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&verificationMessage=${encodeURIComponent(
-        "A verification code was recently sent. Please wait before requesting another code."
-      )}`
-    );
-  }
-
-  await admin
-    .from("student_email_verifications")
-    .update({ consumed_at: now.toISOString() })
-    .eq("user_id", user.id)
-    .eq("email", emailCheck.email)
-    .is("consumed_at", null);
-
-  const code = generateSixDigitCode();
-  const codeHash = hashVerificationCode(code, createVerificationSalt(), requireVerificationPepper());
-  const expiresAt = new Date(now.getTime() + verificationCodeTtlMinutes * 60 * 1000).toISOString();
-  const { data: verification, error: insertError } = await admin
-    .from("student_email_verifications")
-    .insert({
-      user_id: user.id,
-      email: emailCheck.email,
-      code_hash: codeHash,
-      expires_at: expiresAt,
-      max_attempts: verificationCodeMaxAttempts,
-      session_fingerprint: sessionFingerprint
-    })
-    .select("id")
-    .single();
-
-  if (insertError) {
-    throw new Error(insertError.message);
-  }
-
-  const email = buildStudentVerificationEmail(code);
-  const provider = createEmailProvider();
-  const result = await provider.send({
-    to: emailCheck.email,
-    subject: email.subject,
-    html: email.html,
-    text: email.text
-  });
-
-  if (!result.sent) {
-    await admin.from("student_email_verifications").update({ consumed_at: new Date().toISOString() }).eq("id", verification.id);
-    await logVerificationEmailDelivery({
-      supabase,
-      userId: user.id,
-      subject: email.subject,
-      status: "failed",
-      provider: result.provider
-    });
-    redirect(
-      `/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&studentEmailError=${encodeURIComponent(
-        "Verification email could not be sent. Check SMTP configuration and try again."
-      )}`
-    );
-  }
-
-  await logVerificationEmailDelivery({
-    supabase,
-    userId: user.id,
-    subject: email.subject,
-    status: "sent",
-    provider: result.provider
-  });
-
-  redirect(
-    `/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&verificationMessage=${encodeURIComponent(
-      "If this email can be verified, a six-digit code has been sent."
-    )}`
-  );
-}
-
-export async function verifyStudentProjectEmailCodeAction(formData: FormData) {
-  const supabase = await requireSupabase();
-  const { user, profile } = await getCurrentProfile(supabase);
-  requireRole(profile.role, ["student"]);
-
-  const emailCheck = validateStudentEmailForSignedInAccount({
-    enteredEmail: formData.get("studentEmail"),
-    signedInEmail: user.email
-  });
-  const code = verificationCodeSchema.parse(formData.get("verificationCode"));
-
-  if (!emailCheck.ok) {
-    redirect(`/projects/new?studentEmailError=${encodeURIComponent(emailCheck.error)}`);
-  }
-
-  const admin = requireAdminClient();
-  const sessionFingerprint = await getVerificationSessionFingerprint();
-  const { data: verification, error } = await admin
-    .from("student_email_verifications")
-    .select("id, user_id, email, code_hash, expires_at, attempt_count, max_attempts, verified_at, consumed_at, session_fingerprint")
-    .eq("user_id", user.id)
-    .eq("email", emailCheck.email)
-    .is("consumed_at", null)
-    .order("sent_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const { data, error } = await supabase
+    .from("workflow_assignments")
+    .select("id, approver_id, step:workflow_steps!workflow_assignments_workflow_step_id_fkey(name, project:projects!workflow_steps_project_id_fkey(title))")
+    .in("id", assignmentIds)
+    .in("status", ["waiting", "opened"]);
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const failUrl = `/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&studentEmailError=${encodeURIComponent(
-    "The verification code is invalid or expired."
-  )}`;
-
-  if (
-    !verification ||
-    verification.session_fingerprint !== sessionFingerprint ||
-    verification.verified_at ||
-    getVerificationRecordState({
-      expiresAt: verification.expires_at,
-      attemptCount: verification.attempt_count,
-      maxAttempts: verification.max_attempts,
-      verifiedAt: verification.verified_at,
-      consumedAt: verification.consumed_at
-    }) !== "ok"
-  ) {
-    redirect(failUrl);
-  }
-
-  const matches = verifyVerificationCodeHash({
-    code,
-    storedHash: verification.code_hash,
-    pepper: requireVerificationPepper()
-  });
-
-  if (!matches) {
-    await admin
-      .from("student_email_verifications")
-      .update({ attempt_count: verification.attempt_count + 1 })
-      .eq("id", verification.id);
-    redirect(failUrl);
-  }
-
-  const { data: student, error: studentError } = await admin
-    .from("student_directory")
-    .select("id, student_id, email, first_name, last_name, is_active")
-    .eq("student_id", emailCheck.studentId)
-    .eq("email", emailCheck.email)
-    .maybeSingle();
-
-  if (studentError) {
-    throw new Error(studentError.message);
-  }
-
-  if (!student || !validateStudentDirectoryRecord({ studentId: student.student_id, email: student.email, isActive: student.is_active })) {
-    redirect(
-      `/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&studentEmailError=${encodeURIComponent(
-        "We could not verify an active student directory record for this email."
-      )}`
-    );
-  }
-
-  await admin
-    .from("student_email_verifications")
-    .update({ verified_at: new Date().toISOString() })
-    .eq("id", verification.id);
-  await audit(supabase, user.id, "student.email_verified", "student_email_verification", verification.id, {
-    email: emailCheck.email,
-    studentId: emailCheck.studentId
-  });
-
-  redirect(`/projects/new?studentEmail=${encodeURIComponent(emailCheck.email)}&verificationId=${verification.id}`);
+  await Promise.all(
+    ((data ?? []) as unknown as ActiveAssignmentNotificationRow[]).map((assignment) =>
+      createInAppNotification(
+        supabase,
+        assignment.approver_id,
+        projectId,
+        assignment.id,
+        "initial_notification",
+        "New approval assignment",
+        `Please review ${assignment.step?.project?.title ?? "the project"} at ${assignment.step?.name ?? "the active step"}.`,
+        `${assignment.id}:initial_notification:in_app`
+      )
+    )
+  );
 }
 
-export async function createProjectAction(formData: FormData) {
-  const payload = projectRequestSchema.parse(Object.fromEntries(formData));
+async function ensureDefaultProjectWorkflow({
+  createdBy,
+  projectId
+}: {
+  supabase: Awaited<ReturnType<typeof requireSupabase>>;
+  projectId: string;
+  createdBy: string;
+}): Promise<DefaultWorkflowResult> {
+  const admin = createSupabaseAdminClient();
+
+  if (!admin) {
+    return { ok: false, message: "Default workflow setup is not configured." };
+  }
+
+  const { data: existingSteps, error: existingError } = await admin
+    .from("workflow_steps")
+    .select("id, step_order, status, workflow_assignments(id)")
+    .eq("project_id", projectId)
+    .order("step_order", { ascending: true });
+
+  if (existingError) {
+    return { ok: false, message: existingError.message };
+  }
+
+  if ((existingSteps ?? []).length > 0) {
+    const firstStep = existingSteps?.[0];
+    const hasActiveStep = (existingSteps ?? []).some((step) => step.status === "in_progress");
+    const hasEmptyStep = (existingSteps ?? []).some((step) => (step.workflow_assignments ?? []).length === 0);
+
+    if (firstStep && !hasActiveStep && !hasEmptyStep) {
+      const now = new Date().toISOString();
+      await admin.from("workflow_steps").update({ status: "waiting" }).eq("project_id", projectId);
+      await admin
+        .from("workflow_steps")
+        .update({ status: "in_progress", activated_at: now, started_at: now })
+        .eq("id", firstStep.id);
+      await admin
+        .from("projects")
+        .update({ status: "approval_pending", updated_at: now })
+        .eq("id", projectId)
+        .in("status", ["submitted", "approval_pending"]);
+      await notifyActiveStep(admin as Awaited<ReturnType<typeof requireSupabase>>, projectId, firstStep.id as string);
+    }
+
+    return { ok: true, created: false, staffAssignmentCount: 0, facultyAssignmentCount: 0 };
+  }
+
+  const { data: profiles, error: profilesError } = await admin
+    .from("profiles")
+    .select("id, role, is_active")
+    .in("role", ["staff", "approver"]);
+
+  if (profilesError) {
+    return { ok: false, message: profilesError.message };
+  }
+
+  const plan = buildDefaultWorkflowPlan(
+    (profiles ?? []).map((profile) => ({
+      id: profile.id as string,
+      role: profile.role as UserRole,
+      isActive: profile.is_active as boolean | null
+    }))
+  );
+
+  if (!plan.ok) {
+    return plan;
+  }
+
+  const now = new Date().toISOString();
+  const createdStepIds: string[] = [];
+
+  try {
+    const staffStepId = randomUUID();
+    const facultyStepId = randomUUID();
+    const { error: staffStepError } = await admin.from("workflow_steps").insert({
+      id: staffStepId,
+      project_id: projectId,
+      name: defaultStaffReviewStepName,
+      step_order: 1,
+      assignee_role: "staff",
+      assignment_mode: "any_active_role",
+      mode: "parallel",
+      status: "in_progress",
+      completion_rule: "any",
+      minimum_approvals: null,
+      certification_required: false,
+      revision_allowed: true,
+      activated_at: now,
+      started_at: now,
+      created_by: createdBy
+    });
+
+    if (staffStepError) {
+      if (staffStepError.code === "23505") {
+        return { ok: true, created: false, staffAssignmentCount: 0, facultyAssignmentCount: 0 };
+      }
+
+      throw new Error(staffStepError.message);
+    }
+
+    createdStepIds.push(staffStepId);
+
+    const { error: facultyStepError } = await admin.from("workflow_steps").insert({
+      id: facultyStepId,
+      project_id: projectId,
+      name: defaultFacultyApprovalStepName,
+      step_order: 2,
+      assignee_role: "approver",
+      assignment_mode: "any_active_role",
+      mode: "parallel",
+      status: "waiting",
+      completion_rule: "any",
+      minimum_approvals: null,
+      certification_required: true,
+      revision_allowed: true,
+      created_by: createdBy
+    });
+
+    if (facultyStepError) {
+      throw new Error(facultyStepError.message);
+    }
+
+    createdStepIds.push(facultyStepId);
+
+    const staffAssignments = plan.staffApproverIds.map((approverId) => ({
+      id: randomUUID(),
+      workflow_step_id: staffStepId,
+      approver_id: approverId,
+      created_by: createdBy
+    }));
+    const facultyAssignments = plan.facultyApproverIds.map((approverId) => ({
+      id: randomUUID(),
+      workflow_step_id: facultyStepId,
+      approver_id: approverId,
+      created_by: createdBy
+    }));
+
+    const { error: assignmentError } = await admin.from("workflow_assignments").insert([
+      ...staffAssignments,
+      ...facultyAssignments
+    ]);
+
+    if (assignmentError) {
+      throw new Error(assignmentError.message);
+    }
+
+    const { error: projectError } = await admin
+      .from("projects")
+      .update({ status: "approval_pending", updated_at: now })
+      .eq("id", projectId)
+      .in("status", ["submitted", "approval_pending"]);
+
+    if (projectError) {
+      throw new Error(projectError.message);
+    }
+
+    await admin.from("workflow_change_log").insert({
+      project_id: projectId,
+      workflow_step_id: staffStepId,
+      changed_by: createdBy,
+      change_type: "default_workflow_created",
+      reason: "Default Staff Review and Faculty Approval workflow created",
+      after_state: {
+        staffStepId,
+        facultyStepId,
+        staffAssignmentCount: staffAssignments.length,
+        facultyAssignmentCount: facultyAssignments.length
+      }
+    });
+    await notifyActiveStep(admin as Awaited<ReturnType<typeof requireSupabase>>, projectId, staffStepId);
+
+    return {
+      ok: true,
+      created: true,
+      staffAssignmentCount: staffAssignments.length,
+      facultyAssignmentCount: facultyAssignments.length
+    };
+  } catch (error) {
+    if (createdStepIds.length > 0) {
+      await admin.from("workflow_steps").delete().in("id", createdStepIds);
+    }
+
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Default workflow setup failed."
+    };
+  }
+}
+
+export async function prepareProjectUploadAction(input: z.infer<typeof directProjectUploadSchema>) {
+  const rawFileCount = Array.isArray((input as { files?: unknown })?.files) ? input.files.length : 0;
+  console.info("prepareProjectUploadAction started", {
+    hasAttachments: rawFileCount > 0,
+    attachmentCount: rawFileCount
+  });
+
+  const parsedInput = directProjectUploadSchema.safeParse(input);
+
+  if (!parsedInput.success) {
+    return { ok: false as const, message: "Check the project details and selected files." };
+  }
+
+  const payloadResult = parseDirectProjectPayload(parsedInput.data);
+
+  if (!payloadResult.success) {
+    return { ok: false as const, message: payloadResult.error.issues[0]?.message ?? "Check the project details and try again." };
+  }
+
+  const attachmentValidation = validateProjectAttachmentMetadata({
+    files: parsedInput.data.files,
+    requireAttachment: parsedInput.data.intent === "submit"
+  });
+
+  if (!attachmentValidation.ok) {
+    return { ok: false as const, message: attachmentValidation.message };
+  }
+
   const supabase = await requireSupabase();
-  const { user, profile } = await getCurrentProfile(supabase);
-  requireRole(profile.role, ["student"]);
+  await requireAuthenticatedStudentRequester(
+    supabase,
+    newProjectUrl({ error: requesterIdentityErrorMessage })
+  );
+  const admin = createSupabaseAdminClient();
+
+  if (!admin) {
+    return { ok: false as const, message: "Server-side storage upload access is not configured." };
+  }
+
+  const projectId = randomUUID();
+  const files = [];
+
+  for (const file of parsedInput.data.files) {
+    const documentId = randomUUID();
+    const storagePath = `${projectId}/${documentId}/v1-${randomUUID()}-${sanitizeFilename(file.name)}`;
+    const { data, error } = await admin.storage.from("project-documents").createSignedUploadUrl(storagePath);
+
+    if (error || !data?.token) {
+      console.error("Project direct upload URL creation failed", {
+        message: error?.message ?? "Signed upload token was not returned.",
+        projectId,
+        attachmentCount: parsedInput.data.files.length
+      });
+      return { ok: false as const, message: directProjectUploadErrorMessage };
+    }
+
+    files.push({
+      clientFileId: file.clientFileId,
+      documentId,
+      storagePath,
+      token: data.token,
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
+  }
+
+  return { ok: true as const, projectId, files };
+}
+
+export async function cleanupPreparedProjectUploadAction(input: { projectId: string; storagePaths: string[] }) {
+  const parsedProjectId = uuidSchema.safeParse(input.projectId);
+  const storagePaths = Array.isArray(input.storagePaths) ? [...new Set(input.storagePaths.map(String))] : [];
+
+  if (!parsedProjectId.success || storagePaths.length === 0) {
+    return { ok: true as const };
+  }
+
+  const supabase = await requireSupabase();
+  await requireAuthenticatedStudentRequester(
+    supabase,
+    newProjectUrl({ error: requesterIdentityErrorMessage })
+  );
+  const admin = createSupabaseAdminClient();
+
+  if (!admin) {
+    return { ok: false as const, message: "Server-side cleanup access is not configured." };
+  }
+
+  const scopedPaths = storagePaths.filter((path) => path.startsWith(`${parsedProjectId.data}/`));
+
+  if (scopedPaths.length === 0) {
+    return { ok: true as const };
+  }
+
+  const { error } = await admin.storage.from("project-documents").remove(scopedPaths);
+
+  if (error) {
+    console.error("Prepared project upload cleanup failed", {
+      projectId: parsedProjectId.data,
+      objectCount: scopedPaths.length,
+      message: error.message
+    });
+    return { ok: false as const, message: "Prepared upload cleanup failed." };
+  }
+
+  return { ok: true as const };
+}
+
+export async function finalizeProjectUploadAction(input: z.infer<typeof finalizeProjectUploadSchema>) {
+  const rawFileCount = Array.isArray((input as { files?: unknown })?.files) ? input.files.length : 0;
+  console.info("finalizeProjectUploadAction started", {
+    hasAttachments: rawFileCount > 0,
+    attachmentCount: rawFileCount
+  });
+
+  const parsedInput = finalizeProjectUploadSchema.safeParse(input);
+
+  if (!parsedInput.success) {
+    return { ok: false as const, message: "Check the project details and selected files." };
+  }
+
+  const payloadResult = parseDirectProjectPayload(parsedInput.data);
+
+  if (!payloadResult.success) {
+    return { ok: false as const, message: payloadResult.error.issues[0]?.message ?? "Check the project details and try again." };
+  }
+
+  const attachmentValidation = validateProjectAttachmentMetadata({
+    files: parsedInput.data.files,
+    requireAttachment: parsedInput.data.intent === "submit"
+  });
+
+  if (!attachmentValidation.ok) {
+    return { ok: false as const, message: attachmentValidation.message };
+  }
+
+  const supabase = await requireSupabase();
+  const { user, requester } = await requireAuthenticatedStudentRequester(
+    supabase,
+    newProjectUrl({ error: requesterIdentityErrorMessage })
+  );
+  const admin = createSupabaseAdminClient();
+
+  if (!admin) {
+    return { ok: false as const, message: "Server-side storage verification access is not configured." };
+  }
+
+  const payload = payloadResult.data;
   const projectType = normalizeProjectType({
     category: payload.projectTypeCategory,
     custom: payload.projectTypeCustom
   });
-  const requester =
-    payload.verificationId
-      ? await requireVerifiedRequester({
-          userId: user.id,
-          signedInEmail: user.email,
-          enteredEmail: payload.studentEmail,
-          verificationId: payload.verificationId
-        })
-      : null;
   const now = new Date().toISOString();
-  const projectId = randomUUID();
-  const attachments = formData
-    .getAll("attachments")
-    .filter((file): file is File => file instanceof File && file.size > 0);
-
-  const { error } = await supabase
-    .from("projects")
-    .insert({
-      id: projectId,
-      title: payload.title,
-      abstract: payload.abstract ?? "",
-      project_type_id: null,
-      project_type_category: projectType.category,
-      project_type_custom: projectType.custom,
-      academic_program: payload.academicProgram ?? null,
-      start_date: payload.startDate,
-      end_date: payload.endDate,
-      student_id: user.id,
-      status: "draft",
-      student_directory_id: requester?.directoryId ?? null,
-      student_email_verification_id: requester?.verificationId ?? null,
-      requester_student_id: requester?.studentId ?? null,
-      requester_email: requester?.email ?? null,
-      requester_first_name: requester?.firstName ?? null,
-      requester_last_name: requester?.lastName ?? null,
-      requester_verified_at: requester?.verifiedAt ?? null,
-      requester_auth_user_id: requester ? user.id : null
-    });
-
-  if (error) {
-    throw new Error(error.message);
-  }
+  const projectId = parsedInput.data.projectId;
+  const uploadedStoragePaths = parsedInput.data.files.map((file) => file.storagePath);
+  const verifiedFiles = [];
 
   try {
-    for (const file of attachments) {
-      const uploaded = await uploadProjectAttachment({ supabase, userId: user.id, projectId, file });
-      await audit(supabase, user.id, "document.version_uploaded", "project", projectId, uploaded);
+    for (const file of parsedInput.data.files) {
+      if (!isExpectedProjectStoragePath({ projectId, documentId: file.documentId, storagePath: file.storagePath })) {
+        throw new Error("Uploaded file path is not project-scoped.");
+      }
+
+      const { data: blob, error: downloadError } = await admin.storage.from("project-documents").download(file.storagePath);
+
+      if (downloadError || !blob) {
+        throw new Error(downloadError?.message ?? "Uploaded file was not found in storage.");
+      }
+
+      const bytes = Buffer.from(await blob.arrayBuffer());
+
+      if (bytes.byteLength !== file.size) {
+        throw new Error("Uploaded file size did not match the authorized upload.");
+      }
+
+      if (blob.type && blob.type !== file.type) {
+        throw new Error("Uploaded file MIME type did not match the authorized upload.");
+      }
+
+      verifiedFiles.push({
+        ...file,
+        sha256Hash: createDocumentHash(bytes)
+      });
+    }
+
+    const { error } = await supabase
+      .from("projects")
+      .insert({
+        id: projectId,
+        title: payload.title,
+        abstract: payload.abstract ?? "",
+        project_type_id: null,
+        project_type_category: projectType.category,
+        project_type_custom: projectType.custom,
+        academic_program: payload.academicProgram ?? null,
+        start_date: payload.startDate,
+        end_date: payload.endDate,
+        student_id: user.id,
+        status: "draft",
+        student_directory_id: requester.directoryId,
+        student_email_verification_id: null,
+        requester_student_id: requester.studentId,
+        requester_email: requester.email,
+        requester_first_name: requester.firstName,
+        requester_last_name: requester.lastName,
+        requester_verified_at: now,
+        requester_auth_user_id: user.id
+      });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    for (const file of verifiedFiles) {
+      const { error: documentError } = await supabase
+        .from("project_documents")
+        .insert({ id: file.documentId, project_id: projectId, document_type: "Attachment" });
+
+      if (documentError) {
+        throw new Error(documentError.message);
+      }
+
+      const { error: versionError } = await supabase.from("project_document_versions").insert({
+        document_id: file.documentId,
+        version_number: 1,
+        storage_bucket: "project-documents",
+        storage_path: file.storagePath,
+        original_file_name: file.name,
+        mime_type: file.type,
+        file_size: file.size,
+        sha256_hash: file.sha256Hash,
+        active: true,
+        uploaded_by: user.id
+      });
+
+      if (versionError) {
+        throw new Error(versionError.message);
+      }
+
+      await audit(supabase, user.id, "document.version_uploaded", "project", projectId, {
+        documentId: file.documentId,
+        sha256Hash: file.sha256Hash,
+        storagePath: file.storagePath
+      });
     }
 
     if (payload.intent === "submit") {
-      if (attachments.length === 0) {
-        throw new Error("Add at least one attachment before submitting the project.");
-      }
-
       const { error: submitError } = await supabase
         .from("projects")
         .update({ status: "submitted", submitted_at: now, updated_at: now })
@@ -902,23 +1195,152 @@ export async function createProjectAction(formData: FormData) {
         throw new Error(submitError.message);
       }
 
-      const admin = requireAdminClient();
-      await admin
-        .from("student_email_verifications")
-        .update({ consumed_at: new Date().toISOString(), project_id: projectId })
-        .eq("id", requester?.verificationId);
+      const workflowResult = await ensureDefaultProjectWorkflow({ supabase, projectId, createdBy: user.id });
+
+      if (!workflowResult.ok) {
+        console.error("Default workflow creation failed", {
+          projectId,
+          message: workflowResult.message
+        });
+      }
     }
-  } catch (uploadOrSubmitError) {
-    await audit(supabase, user.id, "project.create_failed", "project", projectId, {
-      reason: uploadOrSubmitError instanceof Error ? uploadOrSubmitError.message : "Unknown error"
-    });
-    throw uploadOrSubmitError;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Unknown error";
+
+    await audit(supabase, user.id, "project.create_failed", "project", projectId, { reason });
+    await cleanupFailedNewProject({ projectId, storagePaths: uploadedStoragePaths, supabase, userId: user.id });
+
+    if (isRequesterIdentityDatabaseError(reason)) {
+      return { ok: false as const, message: requesterIdentityErrorMessage };
+    }
+
+    console.error("Project direct upload finalization failed", { projectId, reason });
+    return { ok: false as const, message: projectCreateErrorMessage };
   }
 
   await audit(supabase, user.id, payload.intent === "submit" ? "project.submitted" : "project.created", "project", projectId, {
     projectTypeCategory: projectType.category,
     projectTypeCustom: projectType.custom,
-    requesterVerified: Boolean(requester)
+    requesterVerified: true
+  });
+  revalidatePath("/projects");
+  revalidatePath("/dashboard");
+
+  return { ok: true as const, projectId, redirectTo: `/projects/${projectId}` };
+}
+
+export async function createProjectAction(formData: FormData) {
+  const diagnosticAttachments = getProjectAttachments(formData);
+  console.info("createProjectAction started", {
+    hasAttachments: diagnosticAttachments.length > 0,
+    attachmentCount: diagnosticAttachments.length,
+    attachmentFieldName: projectAttachmentFieldName
+  });
+  const supabase = await requireSupabase();
+  const { user, requester } = await requireAuthenticatedStudentRequester(
+    supabase,
+    newProjectUrl({ error: requesterIdentityErrorMessage })
+  );
+  const payloadResult = projectRequestSchema.safeParse(Object.fromEntries(formData));
+
+  if (!payloadResult.success) {
+    redirect(newProjectUrl({ error: payloadResult.error.issues[0]?.message ?? "Check the project details and try again." }));
+  }
+
+  const payload = payloadResult.data;
+  const attachments = diagnosticAttachments;
+  const attachmentValidation = validateProjectAttachments({
+    files: attachments,
+    requireAttachment: payload.intent === "submit"
+  });
+
+  if (!attachmentValidation.ok) {
+    redirect(newProjectUrl({ error: attachmentValidation.message }));
+  }
+
+  const projectType = normalizeProjectType({
+    category: payload.projectTypeCategory,
+    custom: payload.projectTypeCustom
+  });
+  const now = new Date().toISOString();
+  const projectId = randomUUID();
+  const uploadedStoragePaths: string[] = [];
+
+  try {
+    const { error } = await supabase
+      .from("projects")
+      .insert({
+        id: projectId,
+        title: payload.title,
+        abstract: payload.abstract ?? "",
+        project_type_id: null,
+        project_type_category: projectType.category,
+        project_type_custom: projectType.custom,
+        academic_program: payload.academicProgram ?? null,
+        start_date: payload.startDate,
+        end_date: payload.endDate,
+        student_id: user.id,
+        status: "draft",
+        student_directory_id: requester.directoryId,
+        student_email_verification_id: null,
+        requester_student_id: requester.studentId,
+        requester_email: requester.email,
+        requester_first_name: requester.firstName,
+        requester_last_name: requester.lastName,
+        requester_verified_at: now,
+        requester_auth_user_id: user.id
+      });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    for (const file of attachments) {
+      const uploaded = await uploadProjectAttachment({ supabase, userId: user.id, projectId, file });
+      uploadedStoragePaths.push(uploaded.storagePath);
+      await audit(supabase, user.id, "document.version_uploaded", "project", projectId, uploaded);
+    }
+
+    if (payload.intent === "submit") {
+      const { error: submitError } = await supabase
+        .from("projects")
+        .update({ status: "submitted", submitted_at: now, updated_at: now })
+        .eq("id", projectId)
+        .eq("status", "draft");
+
+      if (submitError) {
+        throw new Error(submitError.message);
+      }
+
+      const workflowResult = await ensureDefaultProjectWorkflow({ supabase, projectId, createdBy: user.id });
+
+      if (!workflowResult.ok) {
+        console.error("Default workflow creation failed", {
+          projectId,
+          message: workflowResult.message
+        });
+      }
+    }
+  } catch (uploadOrSubmitError) {
+    const reason = uploadOrSubmitError instanceof Error ? uploadOrSubmitError.message : "Unknown error";
+
+    await audit(supabase, user.id, "project.create_failed", "project", projectId, {
+      reason
+    });
+    await cleanupFailedNewProject({ projectId, storagePaths: uploadedStoragePaths, supabase, userId: user.id });
+
+    if (isRequesterIdentityDatabaseError(reason)) {
+      redirect(newProjectUrl({ error: requesterIdentityErrorMessage }));
+    }
+
+    console.error("Project creation failed", { projectId, reason });
+    redirect(newProjectUrl({ error: projectCreateErrorMessage }));
+  }
+
+  await audit(supabase, user.id, payload.intent === "submit" ? "project.submitted" : "project.created", "project", projectId, {
+    projectTypeCategory: projectType.category,
+    projectTypeCustom: projectType.custom,
+    requesterVerified: true
   });
   revalidatePath("/projects");
   redirect(`/projects/${projectId}`);
@@ -926,20 +1348,13 @@ export async function createProjectAction(formData: FormData) {
 
 export async function updateProjectAction(projectId: string, formData: FormData) {
   uuidSchema.parse(projectId);
-  const payload = z
-    .preprocess((value) => ({ ...(value as Record<string, unknown>), intent: "draft" }), projectRequestSchema)
-    .parse(Object.fromEntries(formData));
-  const projectType = normalizeProjectType({
-    category: payload.projectTypeCategory,
-    custom: payload.projectTypeCustom
-  });
   const supabase = await requireSupabase();
   const { user, profile } = await getCurrentProfile(supabase);
   await assertProjectAccess(supabase, projectId);
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("student_id, status")
+    .select("id, student_id, status")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -947,16 +1362,36 @@ export async function updateProjectAction(projectId: string, formData: FormData)
     throw new Error(projectError.message);
   }
 
-  const canEdit =
-    profile.role === "admin" ||
-    project?.student_id === user.id ||
-    (profile.role === "staff" && ["submitted", "staff_review"].includes(project?.status ?? ""));
-
-  if (!canEdit || !["draft", "revision_required", "submitted", "staff_review"].includes(project?.status ?? "")) {
-    throw new Error("This project cannot be edited in its current state.");
+  if (!project) {
+    redirect(projectUrl(projectId, { error: "Project not found." }));
   }
 
-  const { error } = await supabase
+  const editability = await getProjectEditabilityForUser(supabase, {
+    projectId,
+    userId: user.id,
+    role: profile.role,
+    isActive: profile.is_active !== false,
+    studentId: project.student_id as string,
+    status: project.status as ProjectStatus
+  });
+
+  if (!editability.allowed) {
+    if (["not_owner", "not_authorized", "inactive_profile"].includes(editability.reason)) {
+      redirect("/unauthorized");
+    }
+
+    redirect(projectEditUrl(projectId, { error: getStaleProjectEditMessage(editability.reason) }));
+  }
+
+  const payload = z
+    .preprocess((value) => ({ ...(value as Record<string, unknown>), intent: "draft" }), projectRequestSchema)
+    .parse(Object.fromEntries(formData));
+  const projectType = normalizeProjectType({
+    category: payload.projectTypeCategory,
+    custom: payload.projectTypeCustom
+  });
+  const updateClient = createSupabaseAdminClient() ?? supabase;
+  const { error } = await updateClient
     .from("projects")
     .update({
       title: payload.title,
@@ -976,6 +1411,7 @@ export async function updateProjectAction(projectId: string, formData: FormData)
 
   await audit(supabase, user.id, "project.updated", "project", projectId);
   revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/edit`);
   revalidatePath("/projects");
   redirect(`/projects/${projectId}`);
 }
@@ -983,8 +1419,35 @@ export async function updateProjectAction(projectId: string, formData: FormData)
 export async function uploadDocumentVersionAction(projectId: string, formData: FormData) {
   uuidSchema.parse(projectId);
   const supabase = await requireSupabase();
-  const { user } = await getCurrentProfile(supabase);
+  const { user, profile } = await getCurrentProfile(supabase);
   await assertProjectAccess(supabase, projectId);
+
+  const { data: uploadProject, error: uploadProjectError } = await supabase
+    .from("projects")
+    .select("id, student_id, status")
+    .eq("id", projectId)
+    .maybeSingle();
+
+  if (uploadProjectError) {
+    throw new Error(uploadProjectError.message);
+  }
+
+  if (!uploadProject) {
+    redirect(projectDocumentsUrl(projectId, { error: "Project not found." }));
+  }
+
+  const editability = await getProjectEditabilityForUser(supabase, {
+    projectId,
+    userId: user.id,
+    role: profile.role,
+    isActive: profile.is_active !== false,
+    studentId: uploadProject.student_id as string,
+    status: uploadProject.status as ProjectStatus
+  });
+
+  if (!editability.allowed) {
+    redirect(projectDocumentsUrl(projectId, { error: getStaleProjectEditMessage(editability.reason) }));
+  }
 
   const documentType = z.string().trim().min(2).parse(formData.get("documentType"));
   const revisionNote = z.string().trim().optional().parse(formData.get("revisionNote") || undefined);
@@ -1078,18 +1541,206 @@ export async function uploadDocumentVersionAction(projectId: string, formData: F
 export async function submitProjectAction(projectId: string) {
   uuidSchema.parse(projectId);
   const supabase = await requireSupabase();
-  const { user } = await getCurrentProfile(supabase);
+  const { user, requester } = await requireAuthenticatedStudentRequester(
+    supabase,
+    projectDocumentsUrl(projectId, { error: requesterIdentityErrorMessage })
+  );
   await assertProjectAccess(supabase, projectId);
 
   const documentVersion = await getLatestActiveDocumentVersion(supabase, projectId);
 
   if (!documentVersion) {
-    throw new Error("Upload at least one active document version before submitting.");
+    redirect(projectDocumentsUrl(projectId, { error: "Upload at least one active document version before submitting." }));
   }
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id, student_id, requester_email, student_email_verification_id")
+    .select("id, student_id, status, submitted_at")
+    .eq("id", projectId)
+    .maybeSingle();
+
+  if (projectError) {
+    console.error("Project submission project lookup failed", { projectId, message: projectError.message, code: projectError.code });
+    redirect(projectDocumentsUrl(projectId, { error: "Project could not be submitted. Check the documents and try again." }));
+  }
+
+  if (!project || project.student_id !== user.id) {
+    redirect(projectDocumentsUrl(projectId, { error: "You can only submit your own project." }));
+  }
+
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("projects")
+    .update({
+      status: "submitted",
+      submitted_at: project.submitted_at ?? now,
+      updated_at: now,
+      student_directory_id: requester.directoryId,
+      student_email_verification_id: null,
+      requester_student_id: requester.studentId,
+      requester_email: requester.email,
+      requester_first_name: requester.firstName,
+      requester_last_name: requester.lastName,
+      requester_verified_at: now,
+      requester_auth_user_id: user.id
+    })
+    .eq("id", projectId)
+    .in("status", ["draft", "revision_required"]);
+
+  if (error) {
+    if (isRequesterIdentityDatabaseError(error.message)) {
+      redirect(projectDocumentsUrl(projectId, { error: requesterIdentityErrorMessage }));
+    }
+
+    console.error("Project submission failed", { projectId, message: error.message, code: error.code });
+    redirect(projectDocumentsUrl(projectId, { error: "Project could not be submitted. Check the documents and try again." }));
+  }
+
+  if (project.status === "revision_required") {
+    await supabase
+      .from("revision_requests")
+      .update({ resolved_at: now, updated_at: now })
+      .eq("project_id", projectId)
+      .is("resolved_at", null);
+  }
+
+  const workflowResult = await ensureDefaultProjectWorkflow({ supabase, projectId, createdBy: user.id });
+
+  if (!workflowResult.ok) {
+    console.error("Default workflow creation failed", {
+      projectId,
+      message: workflowResult.message
+    });
+  }
+
+  await audit(supabase, user.id, "project.submitted", "project", projectId, {
+    documentVersionId: documentVersion.id
+  });
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects");
+}
+
+export async function cancelProjectAction(projectId: string, formData: FormData) {
+  uuidSchema.parse(projectId);
+  const supabase = await requireSupabase();
+  await getCurrentProfile(supabase);
+  const reasonResult = validateCancellationReason(formData.get("reason"));
+
+  if (!reasonResult.ok) {
+    redirect(projectUrl(projectId, { error: reasonResult.message }));
+  }
+
+  const { error } = await supabase.rpc("cancel_project", {
+    p_project_id: projectId,
+    p_reason: reasonResult.reason
+  });
+
+  if (error) {
+    const expectedMessages = new Set([
+      "Authentication is required to cancel this project.",
+      "Provide a cancellation reason.",
+      "You are not authorized to cancel this project.",
+      "Project not found.",
+      "This project has already been cancelled.",
+      "This completed project cannot be cancelled.",
+      "This rejected project cannot be cancelled.",
+      "The project changed while the cancellation was being processed."
+    ]);
+
+    console.error("Project cancellation failed", {
+      projectId,
+      code: error.code,
+      message: error.message
+    });
+
+    if (error.message === "This project has already been cancelled.") {
+      redirect(projectUrl(projectId, { message: error.message }));
+    }
+
+    redirect(projectUrl(projectId, {
+      error: expectedMessages.has(error.message)
+        ? error.message
+        : "Project could not be cancelled. Reload the project and try again."
+    }));
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/history`);
+  revalidatePath("/projects");
+  revalidatePath("/dashboard");
+  redirect(projectUrl(projectId, { message: "Project cancelled." }));
+}
+
+function studentWorkflowUrl(projectId: string, params: Record<string, string>) {
+  const search = new URLSearchParams(params);
+  return `/projects/${projectId}/workflow?${search.toString()}`;
+}
+
+function parseStudentWorkflowPayload(value: FormDataEntryValue | null) {
+  try {
+    const parsed = JSON.parse(String(value ?? "[]")) as StudentWorkflowStepInput[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+interface StudentWorkflowSaveResult {
+  changeType?: string;
+  signerOnly?: boolean;
+  beforeState?: unknown;
+  afterState?: unknown;
+  notifyAssignmentIds?: string[];
+}
+
+function safeStudentWorkflowSaveError(error: { code?: string; message?: string }) {
+  const expectedMessages = [
+    "Authentication is required to save this workflow.",
+    "You can edit only your own project workflow.",
+    "This workflow can no longer be edited.",
+    "The workflow can no longer be edited because approval has already started.",
+    "The workflow must contain at least one approval step.",
+    "Each workflow step must choose Staff, Faculty Approver, or Admin.",
+    "Each workflow step needs a valid assignment mode.",
+    "A workflow step includes an invalid approver.",
+    "The workflow has an invalid minimum approval count.",
+    "The workflow could not be saved because a step has duplicate approvers.",
+    "Each workflow step needs at least one active approver."
+  ];
+
+  if (error.message && expectedMessages.includes(error.message)) {
+    return error.message;
+  }
+
+  if (error.code === "23505") {
+    return "The workflow could not be saved. Reload the latest workflow and try again.";
+  }
+
+  if (error.message === "The workflow could not be saved. Reload the latest workflow and try again.") {
+    return error.message;
+  }
+
+  return "The workflow could not be saved. Reload the latest workflow and try again.";
+}
+
+export async function saveStudentWorkflowAction(projectId: string, formData: FormData) {
+  uuidSchema.parse(projectId);
+  const supabase = await requireSupabase();
+  const { user, profile } = await getCurrentProfile(supabase);
+
+  if (profile.role !== "student") {
+    redirect(studentWorkflowUrl(projectId, { error: "Only the project requester can use the Student workflow editor." }));
+  }
+
+  const admin = createSupabaseAdminClient();
+
+  if (!admin) {
+    redirect(studentWorkflowUrl(projectId, { error: "Workflow editing is not configured." }));
+  }
+
+  const { data: project, error: projectError } = await admin
+    .from("projects")
+    .select("id, status, student_id")
     .eq("id", projectId)
     .maybeSingle();
 
@@ -1097,50 +1748,107 @@ export async function submitProjectAction(projectId: string) {
     throw new Error(projectError.message);
   }
 
-  if (!project || project.student_id !== user.id || !project.requester_email || !project.student_email_verification_id) {
-    throw new Error("Verify your student email before submitting the project.");
+  if (!project || project.student_id !== user.id) {
+    redirect(studentWorkflowUrl(projectId, { error: "You can edit only your own project workflow." }));
   }
 
-  const requester = await requireVerifiedRequester({
+  const workflowEditability = await getStudentWorkflowEditabilityForUser(admin, {
+    projectId,
     userId: user.id,
-    signedInEmail: user.email,
-    enteredEmail: project.requester_email,
-    verificationId: project.student_email_verification_id
+    role: profile.role,
+    isActive: profile.is_active !== false,
+    studentId: project.student_id as string,
+    status: project.status as ProjectStatus
   });
 
-  const now = new Date().toISOString();
-  const { error } = await supabase
-    .from("projects")
-    .update({
-      status: "submitted",
-      submitted_at: now,
-      updated_at: now,
-      student_directory_id: requester.directoryId,
-      student_email_verification_id: requester.verificationId,
-      requester_student_id: requester.studentId,
-      requester_email: requester.email,
-      requester_first_name: requester.firstName,
-      requester_last_name: requester.lastName,
-      requester_verified_at: requester.verifiedAt,
-      requester_auth_user_id: user.id
-    })
-    .eq("id", projectId)
-    .in("status", ["draft", "revision_required"]);
-
-  if (error) {
-    throw new Error(error.message);
+  if (!workflowEditability.allowed) {
+    redirect(studentWorkflowUrl(projectId, {
+      error: workflowEditability.reason === "approval_started"
+        ? "The workflow can no longer be edited because approval has started."
+        : workflowEditability.message
+    }));
   }
 
-  await audit(supabase, user.id, "project.submitted", "project", projectId, {
-    documentVersionId: documentVersion.id
+  const { data: profileRows, error: profileError } = await admin
+    .from("profiles")
+    .select("id, display_name, position, role, is_active")
+    .in("role", ["staff", "approver", "admin"]);
+
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+
+  const profiles = (profileRows ?? []).map((row) => ({
+    id: row.id as string,
+    displayName: String(row.display_name ?? "Approver"),
+    position: row.position as string | null,
+    role: row.role as UserRole,
+    isActive: row.is_active !== false
+  })) satisfies WorkflowProfileOption[];
+  const intent = String(formData.get("intent") ?? "");
+  const workflowJson = intent === "restore_default"
+    ? defaultStudentWorkflow()
+    : parseStudentWorkflowPayload(formData.get("workflowJson"));
+  const validation = validateStudentWorkflow({
+    requesterId: user.id,
+    steps: workflowJson,
+    profiles
   });
-  const admin = requireAdminClient();
-  await admin
-    .from("student_email_verifications")
-    .update({ consumed_at: new Date().toISOString(), project_id: projectId })
-    .eq("id", requester.verificationId);
+
+  if (!validation.ok) {
+    redirect(studentWorkflowUrl(projectId, { error: validation.message }));
+  }
+
+  const rpcSteps = buildStudentWorkflowRpcSteps(workflowJson, validation.steps);
+  console.info("Student workflow payload before RPC", {
+    projectId,
+    intent: intent || "save",
+    submittedStepCount: workflowJson.length,
+    rpcStepCount: rpcSteps.length,
+    submittedStepsWithIds: workflowJson.filter((step) => Boolean(step.id)).length,
+    rpcStepsWithIds: rpcSteps.filter((step) => Boolean(step.id)).length,
+    rpcStepIdPresence: rpcSteps.map((step) => Boolean(step.id))
+  });
+  const { data: saveData, error: saveError } = await supabase.rpc("save_student_project_workflow", {
+    p_project_id: projectId,
+    p_steps: rpcSteps,
+    p_intent: intent || "save"
+  });
+
+  if (saveError) {
+    console.error("Student workflow save failed", {
+      projectId,
+      code: saveError.code,
+      message: saveError.message
+    });
+    redirect(studentWorkflowUrl(projectId, { error: safeStudentWorkflowSaveError(saveError) }));
+  }
+
+  const saveResult = (saveData ?? {}) as StudentWorkflowSaveResult;
+  const notifyAssignmentIds = Array.isArray(saveResult.notifyAssignmentIds)
+    ? saveResult.notifyAssignmentIds.filter((assignmentId) => uuidSchema.safeParse(assignmentId).success)
+    : [];
+
+  await notifyAssignmentsById(admin as Awaited<ReturnType<typeof requireSupabase>>, projectId, notifyAssignmentIds);
+
+  await audit(
+    supabase,
+    user.id,
+    saveResult.changeType ?? "workflow.updated_by_student",
+    "project",
+    projectId,
+    {
+      projectId,
+      signerOnly: saveResult.signerOnly === true,
+      beforeState: saveResult.beforeState ?? [],
+      afterState: saveResult.afterState ?? []
+    }
+  );
+
   revalidatePath(`/projects/${projectId}`);
-  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}/workflow`);
+  revalidatePath("/dashboard");
+  redirect(studentWorkflowUrl(projectId, { message: "Approval workflow saved." }));
 }
 
 export async function addSharedCommentAction(projectId: string, formData: FormData) {
@@ -1175,6 +1883,7 @@ export async function staffReviewAction(projectId: string, formData: FormData) {
   const intent = z.enum(["start_review", "comment", "revision", "reject", "complete", "finalize"]).parse(formData.get("intent"));
   const sharedComment = z.string().trim().optional().parse(formData.get("sharedComment") || undefined);
   const internalComment = z.string().trim().optional().parse(formData.get("internalComment") || undefined);
+  const revisionReason = z.string().trim().optional().parse(formData.get("revisionReason") || undefined);
   const now = new Date().toISOString();
 
   if (sharedComment) {
@@ -1195,10 +1904,59 @@ export async function staffReviewAction(projectId: string, formData: FormData) {
     });
   }
 
+  if (["complete", "revision", "reject"].includes(intent) && profile.role === "staff") {
+    const { data: assignmentRow, error: assignmentError } = await supabase
+      .from("workflow_assignments")
+      .select("id, step:workflow_steps!inner(id, project_id, name, status, assignee_role)")
+      .eq("approver_id", user.id)
+      .in("status", ["waiting", "opened"])
+      .eq("step.project_id", projectId)
+      .eq("step.assignee_role", "staff")
+      .eq("step.status", "in_progress")
+      .limit(1)
+      .maybeSingle();
+
+    if (assignmentError) {
+      console.error("Staff review assignment lookup failed", {
+        projectId,
+        message: assignmentError.message,
+        code: assignmentError.code
+      });
+      redirect(staffReviewUrl(projectId, { error: "Staff review assignment could not be loaded." }));
+    }
+
+    if (!assignmentRow) {
+      redirect(staffReviewUrl(projectId, { error: "No active Staff approval assignment is available for your account." }));
+    }
+
+    const decision =
+      intent === "complete" ? "approved" : intent === "reject" ? "rejected" : "revision_requested";
+    const decisionComment = intent === "complete" ? undefined : revisionReason ?? sharedComment;
+    const decisionResult = await recordApprovalDecision({
+      assignmentId: assignmentRow.id as string,
+      comment: decisionComment,
+      confirmed: false,
+      decision,
+      profile,
+      supabase,
+      user
+    });
+
+    await audit(supabase, user.id, `staff_review.${intent}`, "project", projectId);
+    revalidatePath(`/projects/${decisionResult.projectId}`);
+    revalidatePath(`/staff/review/${projectId}`);
+    revalidatePath("/staff/review");
+    redirect(staffReviewUrl(projectId, { message: intent === "complete" ? "Staff approval recorded." : "Staff decision recorded." }));
+  }
+
+  if (intent === "complete") {
+    redirect(staffReviewUrl(projectId, { error: "Only assigned Staff reviewers can approve the active step." }));
+  }
+
   const updates: Record<string, unknown> = { updated_at: now };
 
   if (intent === "start_review") {
-    updates.status = "staff_review";
+    updates.status = "approval_pending";
     updates.assigned_staff_id = user.id;
   }
 
@@ -1209,10 +1967,6 @@ export async function staffReviewAction(projectId: string, formData: FormData) {
   if (intent === "reject") {
     updates.status = "rejected";
     updates.rejected_at = now;
-  }
-
-  if (intent === "complete") {
-    updates.status = "staff_approved";
   }
 
   if (intent === "finalize") {
@@ -1240,14 +1994,21 @@ export async function staffReviewAction(projectId: string, formData: FormData) {
 
 export async function addWorkflowStepAction(projectId: string, formData: FormData) {
   uuidSchema.parse(projectId);
-  const payload = workflowStepSchema.parse(Object.fromEntries(formData));
-  const approverIds = formData.getAll("approverIds").map(String).filter(Boolean);
+  const payloadResult = workflowStepSchema.safeParse(Object.fromEntries(formData));
+
+  if (!payloadResult.success) {
+    redirect(workflowUrl(projectId, { error: payloadResult.error.issues[0]?.message ?? "Check the workflow step details." }));
+  }
+
+  const payload = payloadResult.data;
+  let approverIds = [...new Set(formData.getAll("approverIds").map(String).filter(Boolean))];
+  const assignmentMode = approverIds.length > 0 ? "specific_users" : "any_active_role";
   const supabase = await requireSupabase();
   const { user } = await getCurrentProfile(supabase);
   await assertStaffCanManageProject(supabase, projectId);
 
   if (payload.completionRule === "minimum" && !payload.minimumApprovals) {
-    throw new Error("Minimum approval rule requires a threshold.");
+    redirect(workflowUrl(projectId, { error: "Minimum approval rule requires a threshold." }));
   }
 
   const { count: actionCount, error: actionCountError } = await supabase
@@ -1260,7 +2021,33 @@ export async function addWorkflowStepAction(projectId: string, formData: FormDat
   }
 
   if ((actionCount ?? 0) > 0 && (!payload.reason || payload.reason.length < 5)) {
-    throw new Error("Adding workflow steps after approvals exist requires a reason.");
+    redirect(workflowUrl(projectId, { error: "Adding workflow steps after approvals exist requires a reason." }));
+  }
+
+  const { data: approverRows, error: approverError } = approverIds.length > 0
+    ? await supabase.from("profiles").select("id, role, is_active").in("id", approverIds)
+    : await supabase.from("profiles").select("id, role, is_active").eq("role", payload.role).neq("role", "student");
+
+  if (approverError) {
+    throw new Error(approverError.message);
+  }
+
+  const validApprovers = (approverRows ?? []).filter((approver) =>
+    approver.role === payload.role &&
+    approver.role !== "student" &&
+    approver.is_active !== false
+  );
+
+  if (approverIds.length > 0 && validApprovers.length !== approverIds.length) {
+    redirect(workflowUrl(projectId, { error: "Selected approvers must be active users matching the step role." }));
+  }
+
+  if (approverIds.length === 0) {
+    approverIds = validApprovers.map((approver) => approver.id as string);
+  }
+
+  if (approverIds.length === 0) {
+    redirect(workflowUrl(projectId, { error: "Each workflow step needs at least one active approver." }));
   }
 
   const { data: latestStep, error: latestStepError } = await supabase
@@ -1284,10 +2071,13 @@ export async function addWorkflowStepAction(projectId: string, formData: FormDat
       project_id: projectId,
       name: payload.name,
       step_order: stepOrder,
+      assignee_role: payload.role,
+      assignment_mode: assignmentMode,
       mode: payload.mode,
       status: "not_started",
       completion_rule: payload.completionRule,
       minimum_approvals: payload.completionRule === "minimum" ? payload.minimumApprovals : null,
+      certification_required: payload.requiresSignature === true,
       due_at: payload.dueAt || null,
       created_by: user.id
     });
@@ -1324,6 +2114,7 @@ export async function addWorkflowStepAction(projectId: string, formData: FormDat
   await audit(supabase, user.id, "workflow.step_added", "project", projectId, { stepId });
   revalidatePath(`/projects/${projectId}/workflow`);
   revalidatePath(`/projects/${projectId}`);
+  redirect(workflowUrl(projectId, { message: "Step added." }));
 }
 
 export async function addApproverToStepAction(projectId: string, stepId: string, formData: FormData) {
@@ -1432,8 +2223,12 @@ export async function activateWorkflowAction(projectId: string) {
 
   const firstStepId = typedSteps[0].id;
 
+  const activatedAt = new Date().toISOString();
   await supabase.from("workflow_steps").update({ status: "waiting" }).eq("project_id", projectId);
-  await supabase.from("workflow_steps").update({ status: "in_progress", activated_at: new Date().toISOString() }).eq("id", firstStepId);
+  await supabase
+    .from("workflow_steps")
+    .update({ status: "in_progress", activated_at: activatedAt, started_at: activatedAt })
+    .eq("id", firstStepId);
   const { error: projectError } = await supabase
     .from("projects")
     .update({ status: "approval_pending", updated_at: new Date().toISOString() })
@@ -1490,18 +2285,343 @@ export async function markAssignmentOpenedAction(assignmentId: string) {
   }
 }
 
-export async function approvalDecisionAction(assignmentId: string, formData: FormData) {
-  uuidSchema.parse(assignmentId);
-  const decision = decisionSchema.parse(formData.get("decision")) as ApprovalDecision;
-  const comment = z.string().trim().optional().parse(formData.get("comment") || undefined);
-  const confirmed = formData.get("certify") === "on";
-  const supabase = await requireSupabase();
-  const { user, profile } = await getCurrentProfile(supabase);
+async function createSignedDocumentVersionForApproval(input: {
+  assignmentId: string;
+  comment?: string;
+  formData: FormData;
+  profile: {
+    display_name: string;
+    position: string | null;
+    role: UserRole;
+  };
+  supabase: Awaited<ReturnType<typeof requireSupabase>>;
+  user: Awaited<ReturnType<typeof requireCurrentUser>>;
+}) {
+  const parsed = parseVisualApprovalForm(input.formData);
 
-  const { data: assignmentRow, error: assignmentError } = await supabase
+  if (!parsed.ok) {
+    throw new Error(parsed.message);
+  }
+
+  const { data: assignmentRow, error: assignmentError } = await input.supabase
+    .from("workflow_assignments")
+    .select("id, status, approver_id, workflow_step_id, step:workflow_steps!workflow_assignments_workflow_step_id_fkey(id, project_id, name, status, certification_required, project:projects!workflow_steps_project_id_fkey(code, title, status))")
+    .eq("id", input.assignmentId)
+    .maybeSingle();
+  const assignment = assignmentRow as ApprovalAssignmentRow | null;
+
+  if (assignmentError) {
+    throw new Error(assignmentError.message);
+  }
+
+  if (!assignment?.step) {
+    throw new Error("Approval assignment not found.");
+  }
+
+  if (assignment.approver_id !== input.user.id) {
+    throw new Error("Only the assigned approver can sign this assignment.");
+  }
+
+  if (!["waiting", "opened"].includes(assignment.status) || assignment.step.status !== "in_progress") {
+    throw new Error("This assignment is not active for signing.");
+  }
+
+  if (assignment.step.project?.status === "cancelled") {
+    throw new Error("This project has been cancelled and can no longer be approved.");
+  }
+
+  const projectId = assignment.step.project_id;
+  const sourceVersion = await getLatestActiveDocumentVersion(input.supabase, projectId);
+
+  if (!sourceVersion) {
+    throw new Error("No active document version is available for signing.");
+  }
+
+  if (sourceVersion.id !== parsed.sourceDocumentVersionId) {
+    throw new Error("The document changed while this approval was open. Refresh and review the latest version.");
+  }
+
+  if (sourceVersion.mime_type !== "application/pdf") {
+    throw new Error("Visual signature placement requires a PDF document.");
+  }
+
+  const existing = await input.supabase
+    .from("approval_actions")
+    .select("id")
+    .eq("assignment_id", input.assignmentId)
+    .maybeSingle();
+
+  if (existing.data) {
+    throw new Error("A decision has already been recorded for this assignment.");
+  }
+
+  const signatureAssetId = randomUUID();
+  const extension = parsed.signature.mimeType === "image/png" ? "png" : "jpg";
+  const signaturePath = signatureStoragePath(input.user.id, extension, signatureAssetId);
+  const { error: signatureUploadError } = await input.supabase.storage
+    .from("user-signatures")
+    .upload(signaturePath, parsed.signature.bytes, {
+      contentType: parsed.signature.mimeType,
+      upsert: false
+    });
+
+  if (signatureUploadError) {
+    throw new Error(signatureUploadError.message);
+  }
+
+  const { error: signatureAssetError } = await input.supabase.from("user_signature_assets").insert({
+    id: signatureAssetId,
+    user_id: input.user.id,
+    method: parsed.method,
+    storage_bucket: "user-signatures",
+    storage_path: signaturePath,
+    mime_type: parsed.signature.mimeType,
+    file_size: parsed.signature.bytes.length,
+    is_default: parsed.saveSignature,
+    created_by: input.user.id
+  });
+
+  if (signatureAssetError) {
+    await input.supabase.storage.from("user-signatures").remove([signaturePath]);
+    throw new Error(signatureAssetError.message);
+  }
+
+  if (parsed.saveSignature) {
+    await input.supabase
+      .from("user_signature_assets")
+      .update({ is_default: false })
+      .eq("user_id", input.user.id)
+      .neq("id", signatureAssetId);
+  }
+
+  const { data: sourceDownload, error: sourceDownloadError } = await input.supabase.storage
+    .from(sourceVersion.storage_bucket)
+    .download(sourceVersion.storage_path);
+
+  if (sourceDownloadError || !sourceDownload) {
+    throw new Error(sourceDownloadError?.message ?? "Could not load the active PDF document.");
+  }
+
+  const sourceBytes = Buffer.from(await sourceDownload.arrayBuffer());
+  const pageCount = await getPdfPageCount(sourceBytes);
+  const { data: existingStamps, error: existingStampsError } = await input.supabase
+    .from("approval_signature_stamps")
+    .select("page_number, x_ratio, y_ratio, width_ratio, height_ratio")
+    .eq("signed_document_version_id", sourceVersion.id);
+
+  if (existingStampsError) {
+    throw new Error(existingStampsError.message);
+  }
+
+  const resolvedPlacement = resolveAutomaticSignaturePlacement({
+    pageCount,
+    signerRole: input.profile.position ?? input.profile.role,
+    existingSignatureStamps: (existingStamps ?? []).map((stamp) => ({
+      pageNumber: Number(stamp.page_number),
+      xRatio: Number(stamp.x_ratio),
+      yRatio: Number(stamp.y_ratio),
+      widthRatio: Number(stamp.width_ratio),
+      heightRatio: Number(stamp.height_ratio)
+    })),
+    preset: parsed.placementPreset,
+    advancedPlacement: parsed.placement
+  });
+  const signedAt = new Date();
+  const stamped = await stampPdfWithSignature({
+    sourcePdf: sourceBytes,
+    signatureImage: parsed.signature.bytes,
+    signatureMimeType: parsed.signature.mimeType,
+    placement: resolvedPlacement.placement,
+    appendSignaturePage: resolvedPlacement.appendSignaturePage,
+    projectCode: assignment.step.project?.code ?? undefined,
+    projectTitle: assignment.step.project?.title ?? undefined,
+    printedName: input.profile.display_name,
+    roleAtSigning: input.profile.position ?? input.profile.role,
+    stepName: assignment.step.name,
+    signedAt
+  });
+
+  const { data: versions, error: versionsError } = await input.supabase
+    .from("project_document_versions")
+    .select("version_number")
+    .eq("document_id", sourceVersion.document_id)
+    .order("version_number", { ascending: false })
+    .limit(1);
+
+  if (versionsError) {
+    throw new Error(versionsError.message);
+  }
+
+  const nextVersionNumber = ((versions?.[0]?.version_number as number | undefined) ?? sourceVersion.version_number) + 1;
+  const signedStoragePath = `${projectId}/${sourceVersion.document_id}/v${nextVersionNumber}-${randomUUID()}-signed.pdf`;
+  const { error: signedUploadError } = await input.supabase.storage
+    .from(sourceVersion.storage_bucket)
+    .upload(signedStoragePath, stamped.bytes, {
+      contentType: "application/pdf",
+      upsert: false
+    });
+
+  if (signedUploadError) {
+    throw new Error(signedUploadError.message);
+  }
+
+  let signedVersionId: string | null = null;
+  let approvalRecorded = false;
+
+  try {
+    const { data: signedVersion, error: signedVersionError } = await input.supabase
+      .from("project_document_versions")
+      .insert({
+        document_id: sourceVersion.document_id,
+        version_number: nextVersionNumber,
+        original_file_name: sourceVersion.original_file_name.replace(/\.pdf$/i, "") + `-signed-v${nextVersionNumber}.pdf`,
+        storage_bucket: sourceVersion.storage_bucket,
+        storage_path: signedStoragePath,
+        file_size: stamped.bytes.length,
+        mime_type: "application/pdf",
+        uploaded_by: input.user.id,
+        active: false,
+        sha256_hash: stamped.sha256Hash,
+        revision_note: `Signed during ${assignment.step.name}`
+      })
+      .select("id")
+      .single();
+
+    if (signedVersionError) {
+      await input.supabase.storage.from(sourceVersion.storage_bucket).remove([signedStoragePath]);
+      throw new Error(signedVersionError.message);
+    }
+
+    signedVersionId = signedVersion.id as string;
+
+    const { error: deactivateError } = await input.supabase
+      .from("project_document_versions")
+      .update({ active: false })
+      .eq("id", sourceVersion.id);
+
+    if (deactivateError) {
+      throw new Error(deactivateError.message);
+    }
+
+    const { error: activateError } = await input.supabase
+      .from("project_document_versions")
+      .update({ active: true })
+      .eq("id", signedVersionId);
+
+    if (activateError) {
+      await input.supabase.from("project_document_versions").update({ active: true }).eq("id", sourceVersion.id);
+      throw new Error(activateError.message);
+    }
+
+    const result = await recordApprovalDecision({
+      assignmentId: input.assignmentId,
+      comment: input.comment,
+      confirmed: true,
+      decision: "approved",
+      documentVersionOverride: {
+        id: signedVersionId,
+        sha256_hash: stamped.sha256Hash
+      },
+      profile: input.profile,
+      supabase: input.supabase,
+      user: input.user
+    });
+    approvalRecorded = true;
+
+    const { error: stampError } = await input.supabase.from("approval_signature_stamps").insert({
+      assignment_id: input.assignmentId,
+      approval_action_id: result.approvalActionId,
+      signer_id: input.user.id,
+      source_document_version_id: sourceVersion.id,
+      signed_document_version_id: signedVersionId,
+      signature_asset_id: signatureAssetId,
+      page_number: resolvedPlacement.placement.pageNumber,
+      x_ratio: resolvedPlacement.placement.xRatio,
+      y_ratio: resolvedPlacement.placement.yRatio,
+      width_ratio: resolvedPlacement.placement.widthRatio,
+      height_ratio: resolvedPlacement.placement.heightRatio,
+      printed_name: input.profile.display_name,
+      role_at_signing: input.profile.position ?? input.profile.role,
+      signed_at: signedAt.toISOString(),
+      created_by: input.user.id
+    });
+
+    if (stampError) {
+      throw new Error(stampError.message);
+    }
+
+    await audit(input.supabase, input.user.id, "signature.created", "approval_assignment", input.assignmentId, {
+      assignmentId: input.assignmentId,
+      workflowStepId: result.workflowStepId,
+      pageNumber: resolvedPlacement.placement.pageNumber,
+      sourceDocumentVersionId: sourceVersion.id,
+      signedDocumentVersionId: signedVersionId
+    });
+    if (parsed.saveSignature) {
+      await audit(input.supabase, input.user.id, "signature.asset_saved", "approval_assignment", input.assignmentId, {
+        assignmentId: input.assignmentId
+      });
+    }
+    await audit(input.supabase, input.user.id, "signature.placement_confirmed", "approval_assignment", input.assignmentId, {
+      assignmentId: input.assignmentId,
+      workflowStepId: result.workflowStepId,
+      pageNumber: resolvedPlacement.placement.pageNumber,
+      sourceDocumentVersionId: sourceVersion.id
+    });
+    await audit(input.supabase, input.user.id, "document.signed_version_created", "project", projectId, {
+      assignmentId: input.assignmentId,
+      workflowStepId: result.workflowStepId,
+      sourceDocumentVersionId: sourceVersion.id,
+      signedDocumentVersionId: signedVersionId,
+      sourceHash: sourceVersion.sha256_hash,
+      signedHash: stamped.sha256Hash
+    });
+    await audit(input.supabase, input.user.id, "approval.signed_and_approved", "approval_assignment", input.assignmentId, {
+      projectId,
+      stepName: result.stepName,
+      assignmentId: input.assignmentId,
+      workflowStepId: result.workflowStepId,
+      sourceDocumentVersionId: sourceVersion.id,
+      signedDocumentVersionId: signedVersionId,
+      sourceHash: sourceVersion.sha256_hash,
+      signedHash: stamped.sha256Hash
+    });
+
+    return result.projectId;
+  } catch (error) {
+    if (!approvalRecorded && signedVersionId) {
+      await input.supabase.from("project_document_versions").update({ active: false }).eq("id", signedVersionId);
+      await input.supabase.from("project_document_versions").update({ active: true }).eq("id", sourceVersion.id);
+      await input.supabase.storage.from(sourceVersion.storage_bucket).remove([signedStoragePath]);
+    }
+    if (!approvalRecorded && !signedVersionId) {
+      await input.supabase.storage.from(sourceVersion.storage_bucket).remove([signedStoragePath]);
+    }
+    throw error;
+  }
+}
+
+async function recordApprovalDecision(input: {
+  assignmentId: string;
+  comment?: string;
+  confirmed: boolean;
+  decision: ApprovalDecision;
+  documentVersionOverride?: {
+    id: string;
+    sha256_hash: string;
+  };
+  profile: {
+    display_name: string;
+    position: string | null;
+    role: UserRole;
+  };
+  supabase: Awaited<ReturnType<typeof requireSupabase>>;
+  user: Awaited<ReturnType<typeof requireCurrentUser>>;
+}) {
+  const { data: assignmentRow, error: assignmentError } = await input.supabase
     .from("workflow_assignments")
     .select("id, status, approver_id, workflow_step_id, step:workflow_steps!workflow_assignments_workflow_step_id_fkey(id, project_id, name, status, certification_required, revision_allowed)")
-    .eq("id", assignmentId)
+    .eq("id", input.assignmentId)
     .maybeSingle();
   const assignment = assignmentRow as ApprovalAssignmentRow | null;
 
@@ -1513,7 +2633,7 @@ export async function approvalDecisionAction(assignmentId: string, formData: For
     throw new Error("Approval assignment not found.");
   }
 
-  if (assignment.approver_id !== user.id) {
+  if (assignment.approver_id !== input.user.id) {
     throw new Error("Only the assigned approver can submit this decision.");
   }
 
@@ -1525,25 +2645,39 @@ export async function approvalDecisionAction(assignmentId: string, formData: For
     throw new Error("This workflow step is not active yet.");
   }
 
-  if (decision === "revision_requested" && !assignment.step.revision_allowed) {
+  if (input.decision === "revision_requested" && !assignment.step.revision_allowed) {
     throw new Error("Revision requests are not allowed for this workflow step.");
   }
 
-  if (decision === "approved" && assignment.step.certification_required && !confirmed) {
+  if (input.decision === "approved" && assignment.step.certification_required && !input.confirmed) {
     throw new Error("Confirm the electronic certification statement before approving.");
   }
 
   const projectId = assignment.step.project_id as string;
-  const documentVersion = await getLatestActiveDocumentVersion(supabase, projectId);
+  const { data: decisionProject, error: decisionProjectError } = await input.supabase
+    .from("projects")
+    .select("status")
+    .eq("id", projectId)
+    .maybeSingle();
+
+  if (decisionProjectError) {
+    throw new Error(decisionProjectError.message);
+  }
+
+  if (decisionProject?.status === "cancelled") {
+    throw new Error("This project has been cancelled and can no longer be approved.");
+  }
+
+  const documentVersion = input.documentVersionOverride ?? await getLatestActiveDocumentVersion(input.supabase, projectId);
 
   if (!documentVersion) {
     throw new Error("No active document version is available for review.");
   }
 
-  const existing = await supabase
+  const existing = await input.supabase
     .from("approval_actions")
     .select("id")
-    .eq("assignment_id", assignmentId)
+    .eq("assignment_id", input.assignmentId)
     .maybeSingle();
 
   if (existing.data) {
@@ -1555,60 +2689,109 @@ export async function approvalDecisionAction(assignmentId: string, formData: For
   const ipAddress = headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() || headerStore.get("x-real-ip");
   const userAgent = headerStore.get("user-agent");
 
-  const { error } = await supabase.from("approval_actions").insert({
-    assignment_id: assignmentId,
+  const { data: approvalAction, error } = await input.supabase.from("approval_actions").insert({
+    assignment_id: input.assignmentId,
     project_id: projectId,
     workflow_step_id: assignment.workflow_step_id,
-    approver_id: user.id,
-    decision,
+    approver_id: input.user.id,
+    decision: input.decision,
     document_version_id: documentVersion.id,
     document_sha256_hash: documentVersion.sha256_hash,
     certification_statement_version: "v1",
     certification_statement: certificationStatement,
-    certified_at: decision === "approved" ? now : null,
-    approver_display_name: profile.display_name,
-    approver_role_at_approval: profile.position ?? profile.role,
+    certified_at: input.decision === "approved" ? now : null,
+    approver_display_name: input.profile.display_name,
+    approver_role_at_approval: input.profile.position ?? input.profile.role,
     ip_address: ipAddress,
     user_agent: userAgent,
-    auth_provider: String(user.app_metadata.provider ?? "supabase"),
-    comment
-  });
+    auth_provider: String(input.user.app_metadata.provider ?? "supabase"),
+    comment: input.comment
+  }).select("id").single();
 
   if (error) {
     throw new Error(error.message);
   }
 
   const assignmentStatus =
-    decision === "approved" ? "approved" : decision === "rejected" ? "rejected" : "revision_requested";
+    input.decision === "approved" ? "approved" : input.decision === "rejected" ? "rejected" : "revision_requested";
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await input.supabase
     .from("workflow_assignments")
     .update({ status: assignmentStatus, completed_at: now })
-    .eq("id", assignmentId);
+    .eq("id", input.assignmentId);
 
   if (updateError) {
     throw new Error(updateError.message);
   }
 
-  if (comment) {
-    await supabase.from("project_comments").insert({
+  if (input.comment) {
+    await input.supabase.from("project_comments").insert({
       project_id: projectId,
       workflow_step_id: assignment.workflow_step_id,
-      author_id: user.id,
+      author_id: input.user.id,
       visibility: "shared",
-      body: comment
+      body: input.comment
     });
   }
 
-  await recomputeWorkflowState(supabase, projectId);
-  await audit(supabase, user.id, `approval.${decision}`, "approval_assignment", assignmentId, {
+  await recomputeWorkflowState(input.supabase, projectId);
+  await audit(input.supabase, input.user.id, `approval.${input.decision}`, "approval_assignment", input.assignmentId, {
     projectId,
+    stepName: assignment.step.name,
     documentVersionId: documentVersion.id,
     documentHash: documentVersion.sha256_hash
   });
+
+  return { projectId, approvalActionId: approvalAction.id as string, workflowStepId: assignment.workflow_step_id, stepName: assignment.step.name };
+}
+
+export async function approvalDecisionAction(assignmentId: string, formData: FormData) {
+  uuidSchema.parse(assignmentId);
+  const decision = decisionSchema.parse(formData.get("decision")) as ApprovalDecision;
+  const comment = z.string().trim().optional().parse(formData.get("comment") || undefined);
+  const confirmed = formData.get("certify") === "on";
+  const supabase = await requireSupabase();
+  const { user, profile } = await getCurrentProfile(supabase);
+
+  let projectId: string;
+
+  try {
+    if (decision === "approved") {
+      projectId = await createSignedDocumentVersionForApproval({
+        assignmentId,
+        comment,
+        formData,
+        profile,
+        supabase,
+        user
+      });
+    } else {
+      const result = await recordApprovalDecision({
+        assignmentId,
+        comment,
+        confirmed,
+        decision,
+        profile,
+        supabase,
+        user
+      });
+      projectId = result.projectId;
+    }
+  } catch (error) {
+    console.error("Approval decision failed", {
+      assignmentId,
+      decision,
+      message: error instanceof Error ? error.message : "Unknown approval error"
+    });
+    redirect(approvalUrl(assignmentId, {
+      error: error instanceof Error ? error.message : "Approval could not be recorded."
+    }));
+  }
+
   revalidatePath(`/approvals/${assignmentId}`);
   revalidatePath("/approvals");
   revalidatePath(`/projects/${projectId}`);
+  redirect(`/approvals?message=${encodeURIComponent("Approval decision recorded.")}`);
 }
 
 export async function createProjectTypeAction(formData: FormData) {

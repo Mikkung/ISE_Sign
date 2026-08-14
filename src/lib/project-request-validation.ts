@@ -1,4 +1,3 @@
-import { createHmac, randomInt, randomUUID, timingSafeEqual } from "crypto";
 import { z } from "zod";
 import { STUDENT_EMAIL_DOMAIN, isValidStudentEmail, normalizeEmail } from "./student-registration";
 
@@ -21,12 +20,23 @@ export const allowedAttachmentMimeTypes = [
   "image/jpeg"
 ] as const;
 export const maxAttachmentBytes = 52_428_800;
-export const verificationCodeTtlMinutes = 10;
-export const verificationCodeCooldownSeconds = 60;
-export const verificationCodeMaxAttempts = 5;
+export const projectAttachmentFieldName = "attachments";
+export const missingSubmissionAttachmentMessage =
+  "Add at least one attachment before submitting the project. You can save it as a draft without an attachment.";
 
 export type AcademicProgram = (typeof academicPrograms)[number];
 export type ProjectTypeCategory = (typeof projectTypeCategories)[number];
+export interface ProjectAttachmentMetadata {
+  name: string;
+  size: number;
+  type: string;
+}
+export type ProjectAttachmentValidationResult =
+  | { ok: true; files: File[] }
+  | { ok: false; message: string };
+export type ProjectAttachmentMetadataValidationResult =
+  | { ok: true; files: ProjectAttachmentMetadata[] }
+  | { ok: false; message: string };
 
 export const projectRequestSchema = z
   .object({
@@ -40,8 +50,6 @@ export const projectRequestSchema = z
     projectTypeCustom: z.string().trim().max(120, "Specify Project Type must be 120 characters or fewer.").optional(),
     startDate: z.string().trim().min(1, "Start Date is required."),
     endDate: z.string().trim().min(1, "End Date is required."),
-    studentEmail: z.string().trim().min(1, "Student Email is required."),
-    verificationId: z.string().uuid().optional(),
     intent: z.enum(["draft", "submit"])
   })
   .superRefine((value, ctx) => {
@@ -69,33 +77,7 @@ export const projectRequestSchema = z
       });
     }
 
-    if (!isValidStudentEmail(value.studentEmail)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["studentEmail"],
-        message: "Enter a valid Chulalongkorn student email address."
-      });
-    }
-
-    if (value.intent === "submit" && !value.verificationId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["verificationId"],
-        message: "Verify your student email before submitting the project."
-      });
-    }
   });
-
-export const studentProjectEmailSchema = z
-  .string()
-  .trim()
-  .transform((value) => normalizeEmail(value))
-  .refine((value) => isValidStudentEmail(value), "Enter a valid Chulalongkorn student email address.");
-
-export const verificationCodeSchema = z
-  .string()
-  .trim()
-  .regex(/^\d{6}$/, "Enter the six-digit verification code.");
 
 export function isDateOnly(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -139,28 +121,81 @@ export function normalizeProjectType(input: {
   return { category, custom: null, displayName: category };
 }
 
+export function isUploadedFile(value: FormDataEntryValue): value is File {
+  return (
+    typeof value !== "string" &&
+    typeof value.name === "string" &&
+    typeof value.size === "number" &&
+    typeof value.arrayBuffer === "function"
+  );
+}
+
+export function getProjectAttachments(formData: FormData): File[] {
+  return formData
+    .getAll(projectAttachmentFieldName)
+    .filter(isUploadedFile)
+    .filter((file) => file.size > 0);
+}
+
+export function validateProjectAttachments(input: {
+  files: File[];
+  requireAttachment: boolean;
+}): ProjectAttachmentValidationResult {
+  if (input.requireAttachment && input.files.length === 0) {
+    return { ok: false, message: missingSubmissionAttachmentMessage };
+  }
+
+  if (input.files.some((file) => file.size > maxAttachmentBytes)) {
+    return { ok: false, message: "Each attachment must be 50 MB or smaller." };
+  }
+
+  if (
+    input.files.some(
+      (file) => !allowedAttachmentMimeTypes.includes((file.type || "application/octet-stream") as (typeof allowedAttachmentMimeTypes)[number])
+    )
+  ) {
+    return { ok: false, message: "One or more selected files use an unsupported file type." };
+  }
+
+  return { ok: true, files: input.files };
+}
+
+export function validateProjectAttachmentMetadata(input: {
+  files: ProjectAttachmentMetadata[];
+  requireAttachment: boolean;
+}): ProjectAttachmentMetadataValidationResult {
+  const files = input.files.map((file) => ({
+    name: file.name,
+    size: Number(file.size),
+    type: file.type || "application/octet-stream"
+  }));
+
+  if (input.requireAttachment && files.length === 0) {
+    return { ok: false, message: missingSubmissionAttachmentMessage };
+  }
+
+  if (files.some((file) => !file.name.trim() || !Number.isFinite(file.size) || file.size <= 0)) {
+    return { ok: false, message: "One or more selected files are invalid." };
+  }
+
+  if (files.some((file) => file.size > maxAttachmentBytes)) {
+    return { ok: false, message: "Each attachment must be 50 MB or smaller." };
+  }
+
+  if (
+    files.some(
+      (file) => !allowedAttachmentMimeTypes.includes((file.type || "application/octet-stream") as (typeof allowedAttachmentMimeTypes)[number])
+    )
+  ) {
+    return { ok: false, message: "One or more selected files use an unsupported file type." };
+  }
+
+  return { ok: true, files };
+}
+
 export function getStudentIdFromEmail(email: string): string {
   const normalized = normalizeEmail(email);
   return normalized.endsWith(`@${STUDENT_EMAIL_DOMAIN}`) ? normalized.slice(0, -STUDENT_EMAIL_DOMAIN.length - 1) : "";
-}
-
-export function validateStudentEmailForSignedInAccount(input: {
-  enteredEmail: unknown;
-  signedInEmail?: string | null;
-}): { ok: true; email: string; studentId: string } | { ok: false; error: string } {
-  const parsed = studentProjectEmailSchema.safeParse(input.enteredEmail);
-
-  if (!parsed.success) {
-    return { ok: false, error: "Enter a valid Chulalongkorn student email address." };
-  }
-
-  const signedInEmail = normalizeEmail(input.signedInEmail);
-
-  if (parsed.data !== signedInEmail) {
-    return { ok: false, error: "Please use the same student email address as your signed-in account." };
-  }
-
-  return { ok: true, email: parsed.data, studentId: getStudentIdFromEmail(parsed.data) };
 }
 
 export function validateStudentDirectoryRecord(input: {
@@ -173,97 +208,4 @@ export function validateStudentDirectoryRecord(input: {
     isValidStudentEmail(input.email) &&
     normalizeEmail(input.email) === `${input.studentId.trim().toLowerCase()}@${STUDENT_EMAIL_DOMAIN}`
   );
-}
-
-export function generateSixDigitCode(): string {
-  return String(randomInt(0, 1_000_000)).padStart(6, "0");
-}
-
-export function createVerificationSalt(): string {
-  return randomUUID();
-}
-
-export function hashVerificationCode(code: string, salt: string, pepper: string): string {
-  if (!pepper) {
-    throw new Error("STUDENT_VERIFICATION_PEPPER is not configured.");
-  }
-
-  const digest = createHmac("sha256", pepper).update(`${salt}:${code}`).digest("hex");
-  return `${salt}:${digest}`;
-}
-
-export function verifyVerificationCodeHash(input: {
-  code: string;
-  storedHash: string;
-  pepper: string;
-}): boolean {
-  const [salt, expected] = input.storedHash.split(":");
-
-  if (!salt || !expected) {
-    return false;
-  }
-
-  const actual = hashVerificationCode(input.code, salt, input.pepper).split(":")[1];
-  const actualBuffer = Buffer.from(actual, "hex");
-  const expectedBuffer = Buffer.from(expected, "hex");
-  return actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer);
-}
-
-export function hashSessionBinding(sessionId: string, pepper: string): string {
-  if (!pepper) {
-    throw new Error("STUDENT_VERIFICATION_PEPPER is not configured.");
-  }
-
-  return createHmac("sha256", pepper).update(sessionId).digest("hex");
-}
-
-export function buildStudentVerificationEmail(code: string): { subject: string; text: string; html: string } {
-  const escapedCode = code.replace(/[^\d]/g, "");
-
-  return {
-    subject: "Your ISE Project Verification Code",
-    text: `Your verification code is: ${escapedCode}\n\nThis code expires in 10 minutes.\n\nIf you did not request this code, you can ignore this email.`,
-    html: `<p>Your verification code is: <strong>${escapedCode}</strong></p><p>This code expires in 10 minutes.</p><p>If you did not request this code, you can ignore this email.</p>`
-  };
-}
-
-export function canSendVerificationCode(input: {
-  lastSentAt?: string | null;
-  now?: Date;
-}): boolean {
-  if (!input.lastSentAt) {
-    return true;
-  }
-
-  const now = input.now ?? new Date();
-  return now.getTime() - new Date(input.lastSentAt).getTime() >= verificationCodeCooldownSeconds * 1000;
-}
-
-export function getVerificationRecordState(input: {
-  expiresAt: string;
-  attemptCount: number;
-  maxAttempts?: number | null;
-  verifiedAt?: string | null;
-  consumedAt?: string | null;
-  now?: Date;
-}): "ok" | "expired" | "max_attempts" | "already_verified" | "consumed" {
-  const now = input.now ?? new Date();
-
-  if (input.consumedAt) {
-    return "consumed";
-  }
-
-  if (input.verifiedAt) {
-    return "already_verified";
-  }
-
-  if (new Date(input.expiresAt).getTime() <= now.getTime()) {
-    return "expired";
-  }
-
-  if (input.attemptCount >= (input.maxAttempts ?? verificationCodeMaxAttempts)) {
-    return "max_attempts";
-  }
-
-  return "ok";
 }

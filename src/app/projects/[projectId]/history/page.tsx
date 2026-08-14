@@ -25,9 +25,14 @@ export default async function ProjectHistoryPage({ params }: { params: Promise<{
                 {event.actor} · {new Date(event.createdAt).toLocaleString("th-TH")}
               </p>
               {Object.keys(event.metadata).length > 0 ? (
-                <pre className="mt-2 overflow-auto rounded bg-slate-50 p-2 text-xs text-slate-600">
-                  {JSON.stringify(event.metadata, null, 2)}
-                </pre>
+                <dl className="mt-2 grid gap-1 rounded bg-slate-50 p-2 text-xs text-slate-600 md:grid-cols-2">
+                  {Object.entries(event.metadata).map(([key, value]) => (
+                    <div key={key}>
+                      <dt className="font-medium text-slate-700">{key}</dt>
+                      <dd className="break-all">{String(value)}</dd>
+                    </div>
+                  ))}
+                </dl>
               ) : null}
             </li>
           ))}

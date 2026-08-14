@@ -30,6 +30,8 @@ function step(overrides: Partial<WorkflowStep>): WorkflowStep {
     id: "step-1",
     name: "Step",
     order: 1,
+    assigneeRole: "approver",
+    assignmentMode: "specific_users",
     mode: "sequential",
     status: "in_progress",
     completionRule: "all",

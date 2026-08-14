@@ -7,6 +7,13 @@ const projectVerificationMigration = readFileSync(
   join(process.cwd(), "supabase/migrations/004_project_requester_verification.sql"),
   "utf8"
 );
+const authenticatedStudentProjectMigration = readFileSync(
+  join(process.cwd(), "supabase/migrations/005_authenticated_student_project_requester.sql"),
+  "utf8"
+);
+const projectsActionSource = readFileSync(join(process.cwd(), "src/app/actions/projects.ts"), "utf8");
+const createProjectPageSource = readFileSync(join(process.cwd(), "src/app/projects/new/page.tsx"), "utf8");
+const createProjectFormSource = readFileSync(join(process.cwd(), "src/app/projects/new/create-project-form.tsx"), "utf8");
 const originalSchema = readFileSync(join(process.cwd(), "supabase/migrations/001_approval_workflow_schema.sql"), "utf8");
 
 describe("student self-registration migration", () => {
@@ -52,6 +59,57 @@ describe("student self-registration migration", () => {
   it("preserves the existing no-self-role-update profile policy", () => {
     expect(originalSchema).toContain('create policy "profiles admin manage" on public.profiles for all');
     expect(originalSchema).not.toMatch(/profiles[^"]*self[^"]*update/i);
+  });
+});
+
+describe("student OTP project submission migration", () => {
+  it("replaces project submission checks to use the authenticated directory snapshot", () => {
+    expect(authenticatedStudentProjectMigration).toContain("create or replace function public.validate_project_submission_requester()");
+    expect(authenticatedStudentProjectMigration).toContain("Authenticated requester identity is required before submission.");
+    expect(authenticatedStudentProjectMigration).toContain("Authenticated requester does not match the project owner.");
+    expect(authenticatedStudentProjectMigration).toContain("directory_row public.student_directory%rowtype");
+    expect(authenticatedStudentProjectMigration).toContain("new.student_id is null");
+    expect(authenticatedStudentProjectMigration).toContain("directory_row.first_name <> new.requester_first_name");
+    expect(authenticatedStudentProjectMigration).toContain("directory_row.last_name <> new.requester_last_name");
+    expect(authenticatedStudentProjectMigration).not.toContain("student_email_verifications%rowtype");
+    expect(authenticatedStudentProjectMigration).not.toContain("new.student_email_verification_id is null");
+  });
+
+  it("keeps requester snapshots immutable after submission", () => {
+    expect(projectVerificationMigration).toContain("prevent_project_requester_identity_changes");
+    expect(projectVerificationMigration).toContain("Requester identity cannot be changed after submission.");
+  });
+});
+
+describe("authenticated student project creation source", () => {
+  it("does not depend on project-level verification code actions or query params", () => {
+    expect(projectsActionSource).not.toContain("sendStudentProjectVerificationCodeAction");
+    expect(projectsActionSource).not.toContain("verifyStudentProjectEmailCodeAction");
+    expect(createProjectPageSource).not.toContain("verificationId");
+    expect(createProjectFormSource).not.toContain("verificationId");
+    expect(createProjectFormSource).not.toContain('name="studentEmail"');
+  });
+
+  it("writes the requester snapshot from server-side authenticated identity", () => {
+    expect(projectsActionSource).toContain("requireAuthenticatedStudentRequester");
+    expect(projectsActionSource).toContain("student_id: user.id");
+    expect(projectsActionSource).toContain("student_directory_id: requester.directoryId");
+    expect(projectsActionSource).toContain("student_email_verification_id: null");
+    expect(projectsActionSource).toContain("requester_student_id: requester.studentId");
+    expect(projectsActionSource).toContain("requester_email: requester.email");
+    expect(projectsActionSource).toContain("requester_auth_user_id: user.id");
+  });
+
+  it("validates submit attachments before creating the project and cleans up failed creation side effects", () => {
+    const attachmentValidationIndex = projectsActionSource.indexOf("validateProjectAttachments");
+    const projectInsertIndex = projectsActionSource.indexOf(".from(\"projects\")\n      .insert");
+
+    expect(attachmentValidationIndex).toBeGreaterThan(-1);
+    expect(projectInsertIndex).toBeGreaterThan(-1);
+    expect(attachmentValidationIndex).toBeLessThan(projectInsertIndex);
+    expect(projectsActionSource).toContain("cleanupFailedNewProject");
+    expect(projectsActionSource).toContain(".storage.from(\"project-documents\").remove");
+    expect(projectsActionSource).toContain(".from(\"projects\").delete()");
   });
 });
 

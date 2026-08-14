@@ -7,6 +7,7 @@ import {
   LogOut,
   Settings,
   ShieldCheck,
+  Trash2,
   Users
 } from "lucide-react";
 import Link from "next/link";
@@ -15,7 +16,13 @@ import { logoutAction } from "@/app/actions/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
 
-const navItems = [
+const navItems: Array<{
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  roles: UserRole[];
+  requiresTestDataTools?: boolean;
+}> = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["student", "staff", "approver", "admin"] },
   { href: "/projects", label: "Projects", icon: FileText, roles: ["student", "staff", "admin"] },
   { href: "/staff/review", label: "Staff Review", icon: ClipboardCheck, roles: ["staff", "admin"] },
@@ -23,13 +30,9 @@ const navItems = [
   { href: "/notifications", label: "Notifications", icon: Bell, roles: ["student", "staff", "approver", "admin"] },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["admin"] },
   { href: "/admin/reports", label: "Reports", icon: FileClock, roles: ["admin"] },
+  { href: "/admin/test-data", label: "Test Data", icon: Trash2, roles: ["admin"], requiresTestDataTools: true },
   { href: "/admin/reminder-rules", label: "Settings", icon: Settings, roles: ["admin"] }
-] satisfies Array<{
-  href: string;
-  label: string;
-  icon: typeof LayoutDashboard;
-  roles: UserRole[];
-}>;
+];
 
 export async function AppShell({ children }: { children: ReactNode }) {
   const supabase = await createSupabaseServerClient();
@@ -47,7 +50,9 @@ export async function AppShell({ children }: { children: ReactNode }) {
     .eq("id", user.id)
     .maybeSingle();
   const role = (profile?.role as UserRole | undefined) ?? "student";
-  const visibleItems = navItems.filter((item) => item.roles.includes(role));
+  const visibleItems = navItems.filter((item) =>
+    item.roles.includes(role) && (!item.requiresTestDataTools || process.env.ENABLE_TEST_DATA_TOOLS === "true")
+  );
 
   return (
     <div className="min-h-screen bg-slate-50">

@@ -4,8 +4,15 @@ import { staffReviewAction } from "@/app/actions/projects";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getProject } from "@/lib/data";
 
-export default async function StaffReviewDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
+export default async function StaffReviewDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ error?: string; message?: string }>;
+}) {
   const { projectId } = await params;
+  const { error, message } = await searchParams;
   const project = await getProject(projectId);
 
   if (!project) {
@@ -23,6 +30,16 @@ export default async function StaffReviewDetailPage({ params }: { params: Promis
       </div>
       <section className="grid gap-4 lg:grid-cols-3">
         <form action={staffReviewAction.bind(null, project.id)} className="space-y-3 rounded border border-slate-200 bg-white p-4 lg:col-span-2">
+          {error ? (
+            <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </p>
+          ) : null}
+          {message ? (
+            <p className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+              {message}
+            </p>
+          ) : null}
           <section className="rounded border border-slate-200 bg-slate-50 p-4 text-sm">
             <h3 className="font-semibold text-slate-950">Verified Student Identity</h3>
             <dl className="mt-3 grid gap-3 md:grid-cols-2">
@@ -67,7 +84,7 @@ export default async function StaffReviewDetailPage({ params }: { params: Promis
           <div className="flex flex-wrap gap-2">
             <button name="intent" value="revision" className="rounded border border-slate-300 px-3 py-2 text-sm font-semibold">Request Revision</button>
             <button name="intent" value="reject" className="rounded border border-red-300 px-3 py-2 text-sm font-semibold text-red-700">Reject</button>
-            <button name="intent" value="complete" className="rounded bg-ise-maroon px-3 py-2 text-sm font-semibold text-white">Complete Staff Review</button>
+            <button name="intent" value="complete" className="rounded bg-ise-maroon px-3 py-2 text-sm font-semibold text-white">Approve Active Step</button>
           </div>
         </form>
         <aside className="rounded border border-slate-200 bg-white p-4">

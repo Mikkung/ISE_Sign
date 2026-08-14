@@ -32,7 +32,7 @@ function allowedRoles(pathname: string): UserRole[] | null {
   }
 
   if (pathname.includes("/workflow")) {
-    return ["staff", "admin"];
+    return ["student", "staff", "admin"];
   }
 
   return null;
@@ -98,8 +98,9 @@ export async function middleware(request: NextRequest) {
         profile: { role, isActive: profile?.is_active }
       })
     ) {
-      url.pathname = "/verify-email";
-      url.searchParams.set("email", user.email ?? "");
+      url.pathname = "/login";
+      url.searchParams.set("studentEmail", user.email ?? "");
+      url.searchParams.set("studentError", "Students sign in with an email verification code.");
       return NextResponse.redirect(url);
     }
 
@@ -133,8 +134,9 @@ export async function middleware(request: NextRequest) {
       !isPublicPath(pathname)
     ) {
       const url = request.nextUrl.clone();
-      url.pathname = "/verify-email";
-      url.searchParams.set("email", user.email ?? "");
+      url.pathname = "/login";
+      url.searchParams.set("studentEmail", user.email ?? "");
+      url.searchParams.set("studentError", "Students sign in with an email verification code.");
       return NextResponse.redirect(url);
     }
 

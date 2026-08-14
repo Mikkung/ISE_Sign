@@ -67,34 +67,26 @@ from public.student_directory
 where email = '6631234567@student.chula.ac.th';
 ```
 
-## Verification Codes
+## Student OTP Sign-In
 
-Project submission uses application-level six-digit verification codes. It does not use Supabase login magic links and does not change the authenticated session.
+Students prove email ownership during sign-in with Supabase email OTP. Project creation does not send a second application-level code.
 
 Security behavior:
 
-- Code is generated server-side using a cryptographically secure random source.
-- Plaintext code is never stored.
-- `student_email_verifications.code_hash` stores a salted HMAC.
-- `STUDENT_VERIFICATION_PEPPER` is server-only.
-- Code expires after 10 minutes.
-- Code can be used only once.
-- Maximum attempts: 5.
-- New code cooldown: 60 seconds per user and email.
-- Issuing a new code invalidates earlier unconsumed codes.
-- Verification is bound to authenticated user ID, email, and the project creation browser session cookie.
+- The server validates the exact `@student.chula.ac.th` domain before sending OTP.
+- The server checks `student_directory` with the service-role client before sending OTP.
+- The student directory row must be active.
+- `student_id` must match the email local part.
+- Supabase sends the six-digit OTP through the Email Magic Link template when it contains `{{ .Token }}`.
+- The server re-checks `student_directory` after OTP verification.
+- The server upserts `public.profiles` with `role = 'student'`.
+- Project creation derives requester identity from the authenticated user and active directory row.
 
-Add this to `.env.local` and the deployment environment:
-
-```text
-STUDENT_VERIFICATION_PEPPER=replace-with-a-long-random-server-only-secret
-```
-
-Do not expose this variable with a `NEXT_PUBLIC_` prefix.
+The legacy `student_email_verifications` table remains in the database from migration 004 but is no longer used by the project creation flow.
 
 ## SMTP
 
-Verification email uses the existing SMTP abstraction.
+Student OTP email delivery uses Supabase Auth SMTP configuration.
 
 Required environment:
 
@@ -107,11 +99,7 @@ SMTP_PASSWORD
 SMTP_SECURE
 ```
 
-The email subject is:
-
-```text
-Your ISE Project Verification Code
-```
+Configure the Supabase Magic Link template to include `{{ .Token }}` so students receive a six-digit OTP.
 
 Do not test with a real student email address unless it is a controlled test account.
 
@@ -173,24 +161,19 @@ Do not run destructive reset commands against the remote project.
 
 ## Runtime Test
 
-1. Add `STUDENT_VERIFICATION_PEPPER`.
-2. Apply migrations.
-3. Import a controlled student directory row.
-4. Confirm SMTP can deliver to the controlled student address.
-5. Sign in as that student.
-6. Open `/projects/new`.
+1. Apply migrations.
+2. Import a controlled student directory row.
+3. Confirm Supabase Auth SMTP can deliver OTP email to the controlled student address.
+4. Sign in as that student through `/login`.
+5. Open `/projects/new`.
+6. Confirm the read-only Authenticated Student section shows Student ID, First Name, Last Name, and Email.
 7. Select an Academic Program.
 8. Select a listed Project Type.
 9. Test `Other` and enter a custom value.
 10. Enter Start Date and End Date.
 11. Select an attachment.
-12. Enter the signed-in student email.
-13. Send the code.
-14. Enter the code.
-15. Confirm Student ID and full name display.
-16. Submit the project.
-17. Confirm requester snapshot fields are stored on `projects`.
-18. Confirm Staff Review shows Student ID, Student Name, Student Email, Verification Status, and Verified At.
-19. Confirm audit logs include student email verification and project submission events.
-20. Remove temporary verification rows and test data when finished.
-
+12. Submit the project.
+13. Confirm requester snapshot fields are stored on `projects`.
+14. Confirm Staff Review shows Student ID, Student Name, Student Email, Verification Status, and Verified At.
+15. Confirm audit logs include project submission events.
+16. Remove temporary test data when finished.

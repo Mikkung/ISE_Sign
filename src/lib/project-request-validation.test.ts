@@ -3,17 +3,16 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   academicPrograms,
-  buildStudentVerificationEmail,
-  canSendVerificationCode,
-  generateSixDigitCode,
-  getVerificationRecordState,
-  hashVerificationCode,
+  getProjectAttachments,
   isDateOnly,
+  maxAttachmentBytes,
+  missingSubmissionAttachmentMessage,
   normalizeProjectType,
+  projectAttachmentFieldName,
   projectRequestSchema,
-  validateStudentDirectoryRecord,
-  validateStudentEmailForSignedInAccount,
-  verifyVerificationCodeHash
+  validateProjectAttachmentMetadata,
+  validateProjectAttachments,
+  validateStudentDirectoryRecord
 } from "./project-request-validation";
 
 function walk(dir: string): string[] {
@@ -72,82 +71,91 @@ describe("project request validation", () => {
     expect(projectRequestSchema.safeParse(basePayload({ startDate: "", endDate: "2026-08-04" })).success).toBe(false);
   });
 
-  it("requires entered student email to match the authenticated account", () => {
-    expect(
-      validateStudentEmailForSignedInAccount({
-        enteredEmail: "  6631234567@STUDENT.CHULA.AC.TH ",
-        signedInEmail: "6631234567@student.chula.ac.th"
-      })
-    ).toEqual({ ok: true, email: "6631234567@student.chula.ac.th", studentId: "6631234567" });
-    expect(
-      validateStudentEmailForSignedInAccount({
-        enteredEmail: "user@chula.ac.th",
-        signedInEmail: "user@chula.ac.th"
-      })
-    ).toEqual({ ok: false, error: "Enter a valid Chulalongkorn student email address." });
-    expect(
-      validateStudentEmailForSignedInAccount({
-        enteredEmail: "6631234567@student.chula.ac.th",
-        signedInEmail: "6630000000@student.chula.ac.th"
-      })
-    ).toEqual({ ok: false, error: "Please use the same student email address as your signed-in account." });
-  });
-
   it("validates student directory prefix, domain, and active status", () => {
     expect(validateStudentDirectoryRecord({ studentId: "6631234567", email: "6631234567@student.chula.ac.th", isActive: true })).toBe(true);
     expect(validateStudentDirectoryRecord({ studentId: "6631234567", email: "6630000000@student.chula.ac.th", isActive: true })).toBe(false);
     expect(validateStudentDirectoryRecord({ studentId: "6631234567", email: "6631234567@chula.ac.th", isActive: true })).toBe(false);
     expect(validateStudentDirectoryRecord({ studentId: "6631234567", email: "6631234567@student.chula.ac.th", isActive: false })).toBe(false);
   });
-});
 
-describe("student verification codes", () => {
-  it("generates a six-digit numeric code", () => {
-    expect(generateSixDigitCode()).toMatch(/^\d{6}$/);
+  it("uses attachments as the project attachment field name", () => {
+    expect(projectAttachmentFieldName).toBe("attachments");
   });
 
-  it("hashes verification codes without storing plaintext", () => {
-    const hash = hashVerificationCode("123456", "salt", "pepper");
-    expect(hash).not.toContain("123456");
-    expect(verifyVerificationCodeHash({ code: "123456", storedHash: hash, pepper: "pepper" })).toBe(true);
-    expect(verifyVerificationCodeHash({ code: "000000", storedHash: hash, pepper: "pepper" })).toBe(false);
+  it("allows Save Draft with no attachment", () => {
+    expect(validateProjectAttachments({ files: [], requireAttachment: false })).toEqual({ ok: true, files: [] });
   });
 
-  it("builds an English email template with the code only in message content", () => {
-    const message = buildStudentVerificationEmail("123456");
-    expect(message.subject).toBe("Your ISE Project Verification Code");
-    expect(message.text).toContain("This code expires in 10 minutes.");
-    expect(message.html).toContain("123456");
+  it("returns a normal validation result for Submit Project with no attachment", () => {
+    expect(() => validateProjectAttachments({ files: [], requireAttachment: true })).not.toThrow();
+    expect(validateProjectAttachments({ files: [], requireAttachment: true })).toEqual({
+      ok: false,
+      message: missingSubmissionAttachmentMessage
+    });
   });
 
-  it("enforces resend cooldown timing", () => {
-    const now = new Date("2026-08-03T10:00:00Z");
-    expect(canSendVerificationCode({ lastSentAt: null, now })).toBe(true);
-    expect(canSendVerificationCode({ lastSentAt: "2026-08-03T09:59:30Z", now })).toBe(false);
-    expect(canSendVerificationCode({ lastSentAt: "2026-08-03T09:59:00Z", now })).toBe(true);
+  it("allows Submit Project with one valid attachment", () => {
+    const file = validAttachment("proposal.pdf", "application/pdf");
+    expect(validateProjectAttachments({ files: [file], requireAttachment: true })).toEqual({ ok: true, files: [file] });
   });
 
-  it("rejects expired, over-attempt, verified, and consumed records", () => {
-    const now = new Date("2026-08-03T10:00:00Z");
-    expect(getVerificationRecordState({ expiresAt: "2026-08-03T10:01:00Z", attemptCount: 0, now })).toBe("ok");
-    expect(getVerificationRecordState({ expiresAt: "2026-08-03T09:59:59Z", attemptCount: 0, now })).toBe("expired");
-    expect(getVerificationRecordState({ expiresAt: "2026-08-03T10:01:00Z", attemptCount: 5, now })).toBe("max_attempts");
-    expect(
-      getVerificationRecordState({
-        expiresAt: "2026-08-03T10:01:00Z",
-        attemptCount: 0,
-        verifiedAt: "2026-08-03T09:58:00Z",
-        now
-      })
-    ).toBe("already_verified");
-    expect(
-      getVerificationRecordState({
-        expiresAt: "2026-08-03T10:01:00Z",
-        attemptCount: 0,
-        consumedAt: "2026-08-03T09:58:00Z",
-        now
-      })
-    ).toBe("consumed");
+  it("ignores empty File placeholders when extracting attachments", () => {
+    const formData = new FormData();
+    formData.append(projectAttachmentFieldName, new File([], "", { type: "application/octet-stream" }));
+
+    expect(getProjectAttachments(formData)).toEqual([]);
+  });
+
+  it("rejects oversized attachments", () => {
+    const file = fileLike({ name: "large.pdf", type: "application/pdf", size: maxAttachmentBytes + 1 });
+    expect(validateProjectAttachments({ files: [file], requireAttachment: true })).toEqual({
+      ok: false,
+      message: "Each attachment must be 50 MB or smaller."
+    });
+  });
+
+  it("rejects unsupported attachment MIME types", () => {
+    const file = validAttachment("script.js", "text/javascript");
+    expect(validateProjectAttachments({ files: [file], requireAttachment: true })).toEqual({
+      ok: false,
+      message: "One or more selected files use an unsupported file type."
+    });
+  });
+
+  it("accepts multiple valid attachments", () => {
+    const files = [
+      validAttachment("proposal.pdf", "application/pdf"),
+      validAttachment("budget.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    ];
+
+    expect(validateProjectAttachments({ files, requireAttachment: true })).toEqual({ ok: true, files });
+  });
+
+  it("validates direct-upload file metadata with the same size and MIME rules", () => {
+    expect(validateProjectAttachmentMetadata({
+      files: [{ name: "proposal.pdf", size: 320_000, type: "application/pdf" }],
+      requireAttachment: true
+    })).toEqual({
+      ok: true,
+      files: [{ name: "proposal.pdf", size: 320_000, type: "application/pdf" }]
+    });
+
+    expect(validateProjectAttachmentMetadata({
+      files: [{ name: "large.pdf", size: maxAttachmentBytes + 1, type: "application/pdf" }],
+      requireAttachment: true
+    })).toEqual({
+      ok: false,
+      message: "Each attachment must be 50 MB or smaller."
+    });
+  });
+
+  it("keeps create-project files out of the form Server Action request", () => {
+    const formSource = readFileSync(join(process.cwd(), "src/app/projects/new/create-project-form.tsx"), "utf8");
+
+    expect(formSource).toContain("uploadToSignedUrl");
+    expect(formSource).toContain("prepareProjectUploadAction");
+    expect(formSource).toContain("finalizeProjectUploadAction");
+    expect(formSource).not.toContain("action={createProjectAction}");
   });
 });
 
@@ -160,9 +168,20 @@ function basePayload(overrides: Record<string, unknown> = {}) {
     projectTypeCustom: "",
     startDate: "2026-08-03",
     endDate: "2026-08-04",
-    studentEmail: "6631234567@student.chula.ac.th",
-    verificationId: "00000000-0000-4000-8000-000000000000",
     intent: "submit",
     ...overrides
   };
+}
+
+function validAttachment(name: string, type: string) {
+  return new File(["content"], name, { type });
+}
+
+function fileLike(input: { name: string; type: string; size: number }) {
+  return {
+    name: input.name,
+    type: input.type,
+    size: input.size,
+    arrayBuffer: async () => new ArrayBuffer(0)
+  } as File;
 }

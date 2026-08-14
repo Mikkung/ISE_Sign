@@ -4,8 +4,6 @@ import {
   isValidStudentEmail,
   normalizeEmail,
   redirectPathForRole,
-  sanitizeFullName,
-  validateStudentPassword,
   validateStudentEmail
 } from "./student-registration";
 
@@ -50,25 +48,9 @@ describe("student self-registration validation", () => {
     expect(isValidStudentEmail("user@student-chula.ac.th")).toBe(false);
   });
 
-  it("sanitizes full name spacing", () => {
-    expect(sanitizeFullName("  Somchai   Chula  ")).toBe("Somchai Chula");
-  });
-
   it("ignores form-supplied role when deciding redirect helpers", () => {
     expect(redirectPathForRole("admin")).toBe("/dashboard");
     expect(redirectPathForRole("student")).toBe("/dashboard");
-  });
-
-  it("validates password complexity without storing or exposing credentials", () => {
-    expect(validateStudentPassword("short1")).toEqual({
-      ok: false,
-      error: "Password must be at least 8 characters."
-    });
-    expect(validateStudentPassword("password")).toEqual({
-      ok: false,
-      error: "Password must include both letters and numbers."
-    });
-    expect(validateStudentPassword("password1")).toEqual({ ok: true });
   });
 
   it("requires confirmed student profile for student access", () => {

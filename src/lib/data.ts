@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type {
   CommentVisibility,
   CompletionRule,
@@ -10,6 +11,8 @@ import type {
   ReminderPolicy,
   StepMode,
   UserRole,
+  WorkflowAssignmentMode,
+  WorkflowAssigneeRole,
   WorkflowApprover,
   WorkflowStep,
   WorkflowStepStatus
@@ -122,6 +125,8 @@ type StepRow = {
   status: WorkflowStepStatus;
   completion_rule: CompletionRule;
   minimum_approvals: number | null;
+  assignee_role?: WorkflowAssigneeRole | null;
+  assignment_mode?: WorkflowAssignmentMode | null;
   certification_required: boolean;
   comments_required: boolean;
   revision_allowed: boolean;
@@ -277,6 +282,8 @@ const projectSelect = `
     status,
     completion_rule,
     minimum_approvals,
+    assignee_role,
+    assignment_mode,
     certification_required,
     comments_required,
     revision_allowed,
@@ -302,6 +309,107 @@ const projectSelect = `
     )
   )
 `;
+
+export const auditLogSelect = "id, action, entity_type, entity_id, metadata, created_at, actor:profiles!audit_logs_actor_id_fkey(display_name, email)";
+
+const safeProjectAuditMetadataKeys = new Set([
+  "projectId",
+  "assignmentId",
+  "workflowStepId",
+  "stepId",
+  "pageNumber",
+  "sourceDocumentVersionId",
+  "signedDocumentVersionId",
+  "documentVersionId",
+  "documentHash",
+  "sourceHash",
+  "signedHash",
+  "priorStatus",
+  "cancellationReason",
+  "cancelledByRole",
+  "affectedWorkflowStepCount",
+  "affectedAssignmentCount"
+]);
+
+const auditActionLabels: Record<string, string> = {
+  "project.created": "Project created",
+  "project.submitted": "Project submitted",
+  "project.cancelled_by_student": "Project cancelled by Student",
+  "project.cancelled_by_admin": "Project cancelled by Administrator",
+  "project.document_uploaded": "Document uploaded",
+  "document.uploaded": "Document uploaded",
+  "staff_review.start_review": "Staff Review started",
+  "staff_review.complete": "Staff approved",
+  "staff_review.revision": "Revision requested",
+  "staff_review.reject": "Project rejected",
+  "approval.approved": "Approval recorded",
+  "approval.rejected": "Project rejected",
+  "approval.revision_requested": "Revision requested",
+  "approval.signed_and_approved": "Approval signed and approved",
+  "signature.created": "Signature created",
+  "signature.asset_saved": "Signature asset saved",
+  "signature.placement_confirmed": "Signature placement confirmed",
+  "document.signed_version_created": "Signed document version created",
+  "workflow.activated": "Approval workflow started",
+  "workflow.step_added": "Workflow step added",
+  "workflow.default_created": "Default approval workflow created",
+  "workflow.cancelled_due_to_project_cancellation": "Workflow cancelled due to project cancellation",
+  "assignment.cancelled_due_to_project_cancellation": "Assignments cancelled due to project cancellation",
+  "workflow.created_by_student": "Workflow created by Student",
+  "workflow.updated_by_student": "Workflow updated by Student",
+  "workflow.restored_to_default": "Workflow restored to default",
+  "certificate.generated": "Certificate generated"
+};
+
+function readableAuditAction(action: string, metadata: Record<string, unknown>) {
+  if (action === "approval.signed_and_approved") {
+    const stepName = typeof metadata.stepName === "string" ? metadata.stepName : "";
+    if (stepName.toLowerCase().includes("staff")) {
+      return "Staff approval signed";
+    }
+    if (stepName.toLowerCase().includes("faculty")) {
+      return "Faculty approval signed";
+    }
+  }
+
+  if (action === "approval.approved") {
+    const stepName = typeof metadata.stepName === "string" ? metadata.stepName : "";
+    if (stepName.toLowerCase().includes("staff")) return "Staff approved";
+    if (stepName.toLowerCase().includes("faculty")) return "Faculty approved";
+  }
+
+  return auditActionLabels[action] ?? action.replaceAll("_", " ").replaceAll(".", " ");
+}
+
+function sanitizeProjectAuditMetadata(metadata: Record<string, unknown> | null) {
+  const safe: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(metadata ?? {})) {
+    if (safeProjectAuditMetadataKeys.has(key) && typeof value !== "object") {
+      safe[key] = value;
+    }
+  }
+
+  return safe;
+}
+
+async function getCurrentUserRole(supabase: NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>) {
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { userId: null, role: null as UserRole | null };
+  }
+
+  const { data } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  return { userId: user.id, role: (data?.role ?? null) as UserRole | null };
+}
+
+async function canAccessProject(supabase: NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>, projectId: string) {
+  const { data, error } = await supabase.rpc("user_can_access_project", { p_project_id: projectId });
+  return !error && data === true;
+}
 
 function emptyProfile(): import("@/lib/types").Profile {
   return {
@@ -388,10 +496,14 @@ function mapAssignment(row: AssignmentRow): WorkflowApprover {
 }
 
 function mapStep(row: StepRow): WorkflowStep {
+  const fallbackRole: WorkflowAssigneeRole = row.certification_required ? "approver" : "staff";
+
   return {
     id: row.id,
     name: row.name,
     order: row.step_order,
+    assigneeRole: row.assignee_role ?? fallbackRole,
+    assignmentMode: row.assignment_mode ?? "specific_users",
     mode: row.mode as StepMode,
     status: row.status as WorkflowStepStatus,
     completionRule: row.completion_rule as CompletionRule,
@@ -653,7 +765,7 @@ export async function listAuditLogs(): Promise<AuditLogRecord[]> {
 
   const { data, error } = await supabase
     .from("audit_logs")
-    .select("id, action, entity_type, entity_id, metadata, created_at, actor:profiles(display_name, email)")
+    .select(auditLogSelect)
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -679,9 +791,24 @@ export async function listProjectAuditLogs(projectId: string): Promise<AuditLogR
     return [];
   }
 
-  const { data, error } = await supabase
+  const allowed = await canAccessProject(supabase, projectId);
+
+  if (!allowed) {
+    return [];
+  }
+
+  const { role } = await getCurrentUserRole(supabase);
+  const auditClient = role === "staff" || role === "admin"
+    ? supabase
+    : createSupabaseAdminClient();
+
+  if (!auditClient) {
+    return [];
+  }
+
+  const { data, error } = await auditClient
     .from("audit_logs")
-    .select("id, action, entity_type, entity_id, metadata, created_at, actor:profiles(display_name, email)")
+    .select(auditLogSelect)
     .eq("entity_id", projectId)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -692,10 +819,10 @@ export async function listProjectAuditLogs(projectId: string): Promise<AuditLogR
 
   return ((data ?? []) as unknown as AuditRow[]).map((row) => ({
     id: row.id,
-    action: row.action,
+    action: readableAuditAction(row.action, row.metadata ?? {}),
     entityType: row.entity_type,
     entityId: row.entity_id,
-    metadata: row.metadata ?? {},
+    metadata: sanitizeProjectAuditMetadata(row.metadata),
     createdAt: row.created_at,
     actor: row.actor?.display_name ?? row.actor?.email ?? "System"
   }));

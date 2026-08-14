@@ -27,6 +27,8 @@ export type WorkflowStepStatus =
 export type ApprovalDecision = "approved" | "rejected" | "revision_requested";
 export type StepMode = "sequential" | "parallel";
 export type CompletionRule = "all" | "any" | "minimum";
+export type WorkflowAssigneeRole = "staff" | "approver" | "admin";
+export type WorkflowAssignmentMode = "any_active_role" | "specific_users";
 export type CommentVisibility = "shared" | "internal";
 export type NotificationChannel = "in_app" | "email";
 export type ReminderEventType =
@@ -97,6 +99,8 @@ export interface WorkflowStep {
   id: string;
   name: string;
   order: number;
+  assigneeRole: WorkflowAssigneeRole;
+  assignmentMode: WorkflowAssignmentMode;
   mode: StepMode;
   status: WorkflowStepStatus;
   completionRule: CompletionRule;

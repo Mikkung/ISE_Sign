@@ -1,20 +1,61 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { addSharedCommentAction, submitProjectAction } from "@/app/actions/projects";
+import { addSharedCommentAction, cancelProjectAction, submitProjectAction } from "@/app/actions/projects";
+import { ProjectCancelDialog } from "@/components/project-cancel-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { WorkflowTimeline } from "@/components/workflow-timeline";
 import { getProject } from "@/lib/data";
+import { getProjectEditabilityForUser } from "@/lib/project-editability.server";
+import { cancellableProjectStatuses } from "@/lib/project-cancellation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { UserRole } from "@/lib/types";
 
-export default async function ProjectDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
+export default async function ProjectDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ error?: string; message?: string }>;
+}) {
   const { projectId } = await params;
+  const { error, message } = await searchParams;
   const project = await getProject(projectId);
 
   if (!project) {
     notFound();
   }
 
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user }
+  } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+  const { data: profile } = user && supabase
+    ? await supabase.from("profiles").select("role, is_active").eq("id", user.id).maybeSingle()
+    : { data: null };
+  const role = profile?.role as UserRole | undefined;
+  const editability = user && profile && role
+    ? await getProjectEditabilityForUser(supabase!, {
+        projectId: project.id,
+        userId: user.id,
+        role,
+        isActive: profile.is_active !== false,
+        studentId: project.student.id,
+        status: project.status
+      })
+    : null;
+  const canCancel =
+    Boolean(profile?.is_active !== false) &&
+    cancellableProjectStatuses.includes(project.status) &&
+    (role === "admin" || (role === "student" && project.student.id === user?.id));
+
   return (
     <div className="space-y-6">
+      {error ? (
+        <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>
+      ) : null}
+      {message ? (
+        <p className="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{message}</p>
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-ise-maroon">{project.code}</p>
@@ -81,14 +122,20 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <section className="rounded border border-slate-200 bg-white p-4 shadow-panel">
           <h3 className="font-semibold text-slate-950">Actions</h3>
           <div className="mt-4 grid gap-2">
-            <Link href={`/projects/${project.id}/edit`} className="rounded border border-slate-300 px-3 py-2 text-center text-sm font-semibold">
-              Edit details
-            </Link>
+            {editability?.allowed ? (
+              <Link href={`/projects/${project.id}/edit`} className="rounded border border-slate-300 px-3 py-2 text-center text-sm font-semibold">
+                Edit Project
+              </Link>
+            ) : editability && !["not_owner", "not_authorized", "inactive_profile"].includes(editability.reason) ? (
+              <p className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm font-medium text-slate-600">
+                Editing locked - {editability.reason === "approval_started" ? "approval has started" : project.status.replace(/_/g, " ")}
+              </p>
+            ) : null}
             <Link href={`/projects/${project.id}/documents`} className="rounded border border-slate-300 px-3 py-2 text-center text-sm font-semibold">
               Documents and versions
             </Link>
             <Link href={`/projects/${project.id}/workflow`} className="rounded border border-slate-300 px-3 py-2 text-center text-sm font-semibold">
-              Approval workflow
+              {role === "student" ? "Edit Approval Workflow" : "Approval workflow"}
             </Link>
             <Link href={`/projects/${project.id}/history`} className="rounded border border-slate-300 px-3 py-2 text-center text-sm font-semibold">
               Audit history
@@ -103,6 +150,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <button className="w-full rounded bg-ise-maroon px-3 py-2 text-sm font-semibold text-white">Submit project</button>
               </form>
             ) : null}
+            {canCancel ? <ProjectCancelDialog action={cancelProjectAction.bind(null, project.id)} /> : null}
           </div>
         </section>
       </div>

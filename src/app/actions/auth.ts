@@ -1,38 +1,24 @@
 "use server";
 
-import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { findActiveStudentByEmail } from "@/lib/student-directory";
 import {
   STUDENT_EMAIL_ERROR,
-  isConfirmedStudentUser,
   redirectPathForRole,
-  sanitizeFullName,
-  validateStudentEmail,
-  validateStudentPassword
+  validateStudentEmail
 } from "@/lib/student-registration";
 import type { UserRole } from "@/lib/types";
 
-const resendCooldownSeconds = 60;
+const studentLoginGenericError = "We could not send a verification code for this student email.";
+const studentOtpError = "The verification code is invalid or expired.";
+const studentOtpRateLimitMessage =
+  "A verification code was recently requested. Use the latest code in your inbox or wait 60 seconds before requesting another one.";
 
-function encodeError(message: string) {
-  return encodeURIComponent(message);
-}
-
-async function getEmailRedirectTo() {
-  const headerStore = await headers();
-  const origin = headerStore.get("origin");
-  const forwardedHost = headerStore.get("x-forwarded-host");
-  const forwardedProto = headerStore.get("x-forwarded-proto") ?? "https";
-  const host = forwardedHost ?? headerStore.get("host");
-  const base = origin ?? (host ? `${forwardedProto}://${host}` : "http://localhost:3000");
-  const parsed = new URL(base);
-
-  if (!["http:", "https:"].includes(parsed.protocol) || !parsed.host) {
-    return "http://localhost:3000/auth/callback";
-  }
-
-  return new URL("/auth/callback", parsed.origin).toString();
+function studentLoginUrl(params: Record<string, string>) {
+  const search = new URLSearchParams(params);
+  return `/login?${search.toString()}`;
 }
 
 export async function loginAction(formData: FormData) {
@@ -70,16 +56,14 @@ export async function loginAction(formData: FormData) {
     redirect("/unauthorized");
   }
 
-  if (
-    role === "student" &&
-    !isConfirmedStudentUser({
-      email: data.user.email,
-      emailConfirmedAt: data.user.email_confirmed_at,
-      profile: { role, isActive: profile?.is_active }
-    })
-  ) {
+  if (role === "student") {
     await supabase.auth.signOut();
-    redirect(`/verify-email?email=${encodeURIComponent(email)}`);
+    redirect(
+      studentLoginUrl({
+        studentEmail: email,
+        studentError: "Students sign in with an email verification code."
+      })
+    );
   }
 
   redirect(redirectPathForRole(role));
@@ -95,87 +79,115 @@ export async function logoutAction() {
   redirect("/login");
 }
 
-export async function registerStudentAction(formData: FormData) {
-  const fullName = sanitizeFullName(formData.get("fullName"));
+export async function sendStudentLoginCodeAction(formData: FormData) {
   const emailResult = validateStudentEmail(formData.get("email"));
-  const password = String(formData.get("password") ?? "");
-  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (!emailResult.ok) {
+    redirect(studentLoginUrl({ studentError: STUDENT_EMAIL_ERROR }));
+  }
+
+  const student = await findActiveStudentByEmail(emailResult.email);
+
+  if (!student) {
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, studentError: studentLoginGenericError }));
+  }
+
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    redirect(`/register/student?error=${encodeError("Supabase is not configured")}`);
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, studentError: "Supabase is not configured." }));
   }
 
-  if (fullName.length < 2 || fullName.length > 120) {
-    redirect(`/register/student?error=${encodeError("Enter a valid full name.")}`);
-  }
-
-  if (!emailResult.ok) {
-    redirect(`/register/student?error=${encodeError(STUDENT_EMAIL_ERROR)}`);
-  }
-
-  const passwordResult = validateStudentPassword(password);
-
-  if (!passwordResult.ok) {
-    redirect(`/register/student?error=${encodeError(passwordResult.error)}`);
-  }
-
-  if (password !== confirmPassword) {
-    redirect(`/register/student?error=${encodeError("Password and confirmation password do not match.")}`);
-  }
-
-  const { error } = await supabase.auth.signUp({
+  const displayName = `${student.firstName} ${student.lastName}`.trim();
+  const { error } = await supabase.auth.signInWithOtp({
     email: emailResult.email,
-    password,
     options: {
-      emailRedirectTo: await getEmailRedirectTo(),
+      shouldCreateUser: true,
       data: {
-        display_name: fullName
+        display_name: displayName
       }
     }
   });
 
   if (error) {
-    redirect(`/register/student?error=${encodeError("Registration could not be completed. Check your details and try again.")}`);
+    if (error.status === 429) {
+      redirect(
+        studentLoginUrl({
+          studentEmail: emailResult.email,
+          codeSent: "1",
+          studentError: studentOtpRateLimitMessage
+        })
+      );
+    }
+
+    console.error("Student OTP send failed", {
+      status: error.status,
+      code: error.code,
+      message: error.message
+    });
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, studentError: studentLoginGenericError }));
   }
 
-  await supabase.auth.signOut();
-  redirect(`/verify-email?email=${encodeURIComponent(emailResult.email)}&registered=1`);
+  redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1" }));
 }
 
-export async function resendStudentConfirmationAction(formData: FormData) {
+export async function verifyStudentLoginCodeAction(formData: FormData) {
   const emailResult = validateStudentEmail(formData.get("email"));
-  const cookieStore = await cookies();
-  const lastSent = Number(cookieStore.get("student_signup_resend_at")?.value ?? 0);
-  const now = Date.now();
+  const token = String(formData.get("token") ?? "").trim();
 
   if (!emailResult.ok) {
-    redirect(`/verify-email?error=${encodeError(STUDENT_EMAIL_ERROR)}`);
+    redirect(studentLoginUrl({ studentError: STUDENT_EMAIL_ERROR }));
   }
 
-  if (now - lastSent < resendCooldownSeconds * 1000) {
-    redirect(`/verify-email?email=${encodeURIComponent(emailResult.email)}&resent=1`);
+  if (!/^\d{6}$/.test(token)) {
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: studentOtpError }));
+  }
+
+  const student = await findActiveStudentByEmail(emailResult.email);
+
+  if (!student) {
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: studentOtpError }));
   }
 
   const supabase = await createSupabaseServerClient();
 
-  if (supabase) {
-    await supabase.auth.resend({
-      type: "signup",
-      email: emailResult.email,
-      options: {
-        emailRedirectTo: await getEmailRedirectTo()
-      }
-    });
+  if (!supabase) {
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: "Supabase is not configured." }));
   }
 
-  cookieStore.set("student_signup_resend_at", String(now), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: resendCooldownSeconds,
-    path: "/verify-email"
+  const { data, error } = await supabase.auth.verifyOtp({
+    email: emailResult.email,
+    token,
+    type: "email"
   });
 
-  redirect(`/verify-email?email=${encodeURIComponent(emailResult.email)}&resent=1`);
+  if (error || !data.user || data.user.email?.toLowerCase() !== emailResult.email) {
+    await supabase.auth.signOut();
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: studentOtpError }));
+  }
+
+  const admin = createSupabaseAdminClient();
+
+  if (!admin) {
+    await supabase.auth.signOut();
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: "Student sign-in is not configured." }));
+  }
+
+  const { error: profileError } = await admin.from("profiles").upsert(
+    {
+      id: data.user.id,
+      email: emailResult.email,
+      display_name: `${student.firstName} ${student.lastName}`.trim(),
+      role: "student",
+      is_active: true
+    },
+    { onConflict: "id" }
+  );
+
+  if (profileError) {
+    await supabase.auth.signOut();
+    redirect(studentLoginUrl({ studentEmail: emailResult.email, codeSent: "1", studentError: studentOtpError }));
+  }
+
+  redirect("/dashboard");
 }

@@ -38,22 +38,6 @@ export function validateStudentEmail(value: unknown): { ok: true; email: string 
   return { ok: true, email };
 }
 
-export function sanitizeFullName(value: unknown): string {
-  return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
-}
-
-export function validateStudentPassword(password: unknown): { ok: true } | { ok: false; error: string } {
-  if (typeof password !== "string" || password.length < 8) {
-    return { ok: false, error: "Password must be at least 8 characters." };
-  }
-
-  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-    return { ok: false, error: "Password must include both letters and numbers." };
-  }
-
-  return { ok: true };
-}
-
 export function redirectPathForRole(role: string | null | undefined): string {
   switch (role) {
     case "student":
