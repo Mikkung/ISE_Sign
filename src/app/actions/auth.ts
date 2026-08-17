@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { findActiveStudentByEmail } from "@/lib/student-directory";
+import { getSiteUrl, safeInternalPath } from "@/lib/site-url";
 import {
   redirectPathForRole,
   validateRequesterEmail
@@ -21,8 +22,17 @@ function studentLoginUrl(params: Record<string, string>) {
 }
 
 function safeNextPath(value: FormDataEntryValue | string | null) {
-  const next = String(value ?? "").trim();
-  return next.startsWith("/") && !next.startsWith("//") ? next : "";
+  return safeInternalPath(typeof value === "string" ? value : null);
+}
+
+function passwordRecoveryUrl(params: Record<string, string>) {
+  const search = new URLSearchParams(params);
+  return `/forgot-password?${search.toString()}`;
+}
+
+function updatePasswordUrl(params: Record<string, string>) {
+  const search = new URLSearchParams(params);
+  return `/update-password?${search.toString()}`;
 }
 
 export async function loginAction(formData: FormData) {
@@ -82,6 +92,77 @@ export async function logoutAction() {
   }
 
   redirect("/login");
+}
+
+export async function requestPasswordResetAction(formData: FormData) {
+  const emailResult = validateRequesterEmail(formData.get("email"));
+
+  if (!emailResult.ok) {
+    redirect(passwordRecoveryUrl({ resetSent: "1" }));
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    redirect(passwordRecoveryUrl({ resetSent: "1" }));
+  }
+
+  const redirectTo = `${getSiteUrl()}/auth/callback?next=/update-password`;
+  const { error } = await supabase.auth.resetPasswordForEmail(emailResult.email, {
+    redirectTo
+  });
+
+  if (error) {
+    console.error("Password recovery email request failed", {
+      status: error.status,
+      code: error.code,
+      message: error.message
+    });
+  }
+
+  redirect(passwordRecoveryUrl({ resetSent: "1" }));
+}
+
+export async function updatePasswordAction(formData: FormData) {
+  const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (password.length < 8) {
+    redirect(updatePasswordUrl({ error: "Password must be at least 8 characters." }));
+  }
+
+  if (password !== confirmPassword) {
+    redirect(updatePasswordUrl({ error: "Passwords do not match." }));
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    redirect(updatePasswordUrl({ error: "This password reset link is invalid or has expired." }));
+  }
+
+  const {
+    data: { user },
+    error: userError
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    redirect(updatePasswordUrl({ error: "This password reset link is invalid or has expired." }));
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    console.error("Password update failed", {
+      status: error.status,
+      code: error.code,
+      message: error.message
+    });
+    redirect(updatePasswordUrl({ error: "Password could not be updated. Request a new reset link and try again." }));
+  }
+
+  await supabase.auth.signOut();
+  redirect("/login?passwordUpdated=1");
 }
 
 export async function sendStudentLoginCodeAction(formData: FormData) {

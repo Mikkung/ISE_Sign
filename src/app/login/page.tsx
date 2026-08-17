@@ -8,9 +8,16 @@ import type { UserRole } from "@/lib/types";
 export default async function LoginPage({
   searchParams
 }: {
-  searchParams: Promise<{ error?: string; studentError?: string; studentEmail?: string; codeSent?: string; next?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    studentError?: string;
+    studentEmail?: string;
+    codeSent?: string;
+    next?: string;
+    passwordUpdated?: string;
+  }>;
 }) {
-  const { error, studentError, studentEmail, codeSent, next } = await searchParams;
+  const { error, studentError, studentEmail, codeSent, next, passwordUpdated } = await searchParams;
   const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "";
   const supabase = await createSupabaseServerClient();
   const {
@@ -103,6 +110,11 @@ export default async function LoginPage({
 
           <section className="rounded border border-slate-200 p-5">
             <h2 className="text-lg font-semibold text-slate-950">Staff, Approver, and Admin Sign In</h2>
+            {passwordUpdated ? (
+              <p className="mt-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                Password updated successfully. Sign in with your new password.
+              </p>
+            ) : null}
             {error ? (
               <p className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {error}
@@ -134,6 +146,9 @@ export default async function LoginPage({
                 Sign In
               </button>
             </form>
+            <a href="/forgot-password" className="mt-4 inline-flex text-sm font-semibold text-ise-maroon hover:underline">
+              Forgot password?
+            </a>
           </section>
         </div>
       </section>

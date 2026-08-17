@@ -4,7 +4,15 @@ import type { CookieOptions } from "@supabase/ssr";
 import { isConfirmedStudentUser, redirectPathForRole } from "@/lib/student-registration";
 import type { UserRole } from "@/lib/types";
 
-const publicPrefixes = ["/login", "/register/student", "/verify-email", "/auth/callback", "/unauthorized"];
+const publicPrefixes = [
+  "/login",
+  "/forgot-password",
+  "/update-password",
+  "/register/student",
+  "/verify-email",
+  "/auth/callback",
+  "/unauthorized"
+];
 const publicApiPrefixes = ["/api/reminders/run"];
 
 function isPublicPath(pathname: string) {
