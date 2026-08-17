@@ -317,6 +317,10 @@ const projectSelect = `
     )
   )
 `;
+const legacyRequesterProjectSelect = projectSelect.replace(
+  "  requester_name,\n  requester_type,\n  requester_organization,\n",
+  ""
+);
 
 export const auditLogSelect = "id, action, entity_type, entity_id, metadata, created_at, actor:profiles!audit_logs_actor_id_fkey(display_name, email)";
 
@@ -399,6 +403,20 @@ function sanitizeProjectAuditMetadata(metadata: Record<string, unknown> | null) 
   }
 
   return safe;
+}
+
+function isMissingGenericRequesterSnapshotColumn(error: { code?: string; message?: string }) {
+  const message = error.message ?? "";
+
+  return (
+    error.code === "PGRST204" &&
+    message.includes("schema cache") &&
+    (
+      message.includes("requester_name") ||
+      message.includes("requester_type") ||
+      message.includes("requester_organization")
+    )
+  );
 }
 
 async function getCurrentUserRole(supabase: NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>) {
@@ -644,7 +662,31 @@ export async function listProjectsFiltered(filters: {
     query = query.ilike("title", `%${filters.q.trim()}%`);
   }
 
-  const { data, error } = await query;
+  let { data, error } = await query;
+
+  if (error && isMissingGenericRequesterSnapshotColumn(error)) {
+    let fallbackQuery = supabase
+      .from("projects")
+      .select(legacyRequesterProjectSelect)
+      .order("updated_at", { ascending: false })
+      .limit(100);
+
+    if (filters.status && filters.status !== "all") {
+      fallbackQuery = fallbackQuery.eq("status", filters.status);
+    }
+
+    if (filters.projectTypeId && filters.projectTypeId !== "all") {
+      fallbackQuery = fallbackQuery.eq("project_type_id", filters.projectTypeId);
+    }
+
+    if (filters.q?.trim()) {
+      fallbackQuery = fallbackQuery.ilike("title", `%${filters.q.trim()}%`);
+    }
+
+    const fallback = await fallbackQuery;
+    data = fallback.data as typeof data;
+    error = fallback.error;
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -662,9 +704,18 @@ export async function getProject(projectId: string): Promise<Project | null> {
 
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(projectId);
   const query = supabase.from("projects").select(projectSelect);
-  const { data, error } = isUuid
+  let { data, error } = isUuid
     ? await query.eq("id", projectId).maybeSingle()
     : await query.eq("code", projectId).maybeSingle();
+
+  if (error && isMissingGenericRequesterSnapshotColumn(error)) {
+    const fallbackQuery = supabase.from("projects").select(legacyRequesterProjectSelect);
+    const fallback = isUuid
+      ? await fallbackQuery.eq("id", projectId).maybeSingle()
+      : await fallbackQuery.eq("code", projectId).maybeSingle();
+    data = fallback.data as typeof data;
+    error = fallback.error;
+  }
 
   if (error) {
     throw new Error(error.message);
