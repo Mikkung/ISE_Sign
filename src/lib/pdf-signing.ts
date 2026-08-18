@@ -194,16 +194,6 @@ export async function stampPdfWithSignature(input: PdfSignatureStampInput): Prom
     timeZone: "Asia/Bangkok"
   }).format(input.signedAt);
 
-  page.drawRectangle({
-    x: boxX,
-    y: boxY,
-    width: boxWidth,
-    height: boxHeight,
-    borderColor: rgb(0.55, 0.14, 0.2),
-    borderWidth: 0.8,
-    color: rgb(1, 1, 1),
-    opacity: 0.92
-  });
   page.drawImage(signature, {
     x: boxX + 8,
     y: boxY + boxHeight - imageHeight - 6,

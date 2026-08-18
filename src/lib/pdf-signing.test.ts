@@ -45,6 +45,10 @@ describe("PDF visual signing helpers", () => {
     expect(source.equals(source)).toBe(true);
   });
 
+  it("does not draw a visible signature block border into the final PDF", () => {
+    expect(stampPdfWithSignature.toString()).not.toContain("drawRectangle");
+  });
+
   it("resolves automatic Staff and Faculty slots without drag interaction", () => {
     expect(resolveAutomaticSignaturePlacement({
       pageCount: 2,

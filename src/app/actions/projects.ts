@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createDocumentHash, createVerificationCode } from "@/lib/certificates";
+import { completedDocumentType } from "@/lib/completed-documents";
 import { certificationStatement } from "@/lib/constants";
 import { validateCancellationReason } from "@/lib/project-cancellation";
 import { getStaleProjectEditMessage } from "@/lib/project-editability";
@@ -1538,6 +1539,165 @@ export async function uploadDocumentVersionAction(projectId: string, formData: F
   });
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/documents`);
+}
+
+export async function uploadCompletedDocumentAction(projectId: string, formData: FormData) {
+  uuidSchema.parse(projectId);
+  const supabase = await requireSupabase();
+  const { user, profile } = await getCurrentProfile(supabase);
+
+  if (!["staff", "admin"].includes(profile.role)) {
+    redirect(projectUrl(projectId, { error: "Only Staff or Admin can upload a completed document." }));
+  }
+
+  await assertStaffCanManageProject(supabase, projectId);
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id, title, status, student_id")
+    .eq("id", projectId)
+    .maybeSingle();
+
+  if (projectError) {
+    throw new Error(projectError.message);
+  }
+
+  if (!project) {
+    redirect(projectUrl(projectId, { error: "Project not found." }));
+  }
+
+  if (project.status !== "completed") {
+    redirect(projectUrl(projectId, { error: "Completed documents can be uploaded only after approval is completed." }));
+  }
+
+  const file = formData.get("file");
+
+  if (!(file instanceof File) || file.size === 0) {
+    redirect(projectUrl(projectId, { error: "Choose a completed document to upload." }));
+  }
+
+  if (file.size > maxAttachmentBytes) {
+    redirect(projectUrl(projectId, { error: "Completed document must be 50 MB or smaller." }));
+  }
+
+  const mimeType = file.type || "application/octet-stream";
+
+  if (!allowedAttachmentMimeTypes.includes(mimeType as (typeof allowedAttachmentMimeTypes)[number])) {
+    redirect(projectUrl(projectId, { error: "Completed document file type is not allowed." }));
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const sha256Hash = createDocumentHash(bytes);
+  const { data: existingDocument, error: existingDocumentError } = await supabase
+    .from("project_documents")
+    .select("id")
+    .eq("project_id", projectId)
+    .eq("document_type", completedDocumentType)
+    .maybeSingle();
+
+  if (existingDocumentError) {
+    throw new Error(existingDocumentError.message);
+  }
+
+  let documentId = existingDocument?.id as string | undefined;
+
+  if (!documentId) {
+    documentId = randomUUID();
+    const { error } = await supabase
+      .from("project_documents")
+      .insert({ id: documentId, project_id: projectId, document_type: completedDocumentType });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  const { data: latestVersion, error: latestVersionError } = await supabase
+    .from("project_document_versions")
+    .select("version_number")
+    .eq("document_id", documentId)
+    .order("version_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (latestVersionError) {
+    throw new Error(latestVersionError.message);
+  }
+
+  const versionNumber = (latestVersion?.version_number ?? 0) + 1;
+  const storagePath = `${projectId}/${documentId}/completed-v${versionNumber}-${randomUUID()}-${sanitizeFilename(file.name)}`;
+  const { error: uploadError } = await supabase.storage
+    .from("project-documents")
+    .upload(storagePath, bytes, {
+      contentType: mimeType,
+      upsert: false
+    });
+
+  if (uploadError) {
+    throw new Error(uploadError.message);
+  }
+
+  const { data: versionRow, error: versionError } = await supabase
+    .from("project_document_versions")
+    .insert({
+      document_id: documentId,
+      version_number: versionNumber,
+      storage_bucket: "project-documents",
+      storage_path: storagePath,
+      original_file_name: file.name,
+      mime_type: mimeType,
+      file_size: file.size,
+      sha256_hash: sha256Hash,
+      active: true,
+      uploaded_by: user.id
+    })
+    .select("id")
+    .single();
+
+  if (versionError) {
+    await supabase.storage.from("project-documents").remove([storagePath]);
+    throw new Error(versionError.message);
+  }
+
+  await supabase
+    .from("project_document_versions")
+    .update({ active: false })
+    .eq("document_id", documentId)
+    .eq("active", true)
+    .neq("id", versionRow.id);
+
+  await supabase.from("notification_logs").insert({
+    recipient_id: project.student_id,
+    project_id: projectId,
+    channel: "in_app",
+    type: "completed_document_available",
+    subject: versionNumber === 1 ? "Completed document available" : "Updated completed document available",
+    body: versionNumber === 1
+      ? `Your completed document for ${project.title ?? "this project"} is now available.`
+      : `An updated completed document for ${project.title ?? "this project"} is now available.`,
+    status: "sent",
+    sent_at: new Date().toISOString(),
+    dedupe_key: `${projectId}:completed_document:v${versionNumber}:in_app`,
+    metadata: {
+      projectId,
+      documentId,
+      documentVersionId: versionRow.id,
+      versionNumber
+    },
+    created_by: user.id
+  });
+
+  await audit(supabase, user.id, "document.completed_version_uploaded", "project", projectId, {
+    documentId,
+    documentVersionId: versionRow.id,
+    versionNumber,
+    sha256Hash
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/documents`);
+  revalidatePath("/notifications");
+  redirect(projectUrl(projectId, { message: "Completed document uploaded." }));
 }
 
 export async function submitProjectAction(projectId: string) {

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { addSharedCommentAction, cancelProjectAction, submitProjectAction } from "@/app/actions/projects";
+import { addSharedCommentAction, cancelProjectAction, submitProjectAction, uploadCompletedDocumentAction } from "@/app/actions/projects";
 import { ApprovalStatusCard } from "@/components/approval-status-card";
 import { ProjectCancelDialog } from "@/components/project-cancel-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { WorkflowTimeline } from "@/components/workflow-timeline";
+import { getCompletedDocument } from "@/lib/completed-documents";
 import { getProject } from "@/lib/data";
 import { getProjectEditabilityForUser } from "@/lib/project-editability.server";
 import { cancellableProjectStatuses } from "@/lib/project-cancellation";
@@ -44,10 +45,15 @@ export default async function ProjectDetailPage({
         status: project.status
       })
     : null;
+  const { data: canManageProject } = supabase && user && ["staff", "admin"].includes(role ?? "")
+    ? await supabase.rpc("staff_can_manage_project", { p_project_id: project.id })
+    : { data: false };
   const canCancel =
     Boolean(profile?.is_active !== false) &&
     cancellableProjectStatuses.includes(project.status) &&
     (role === "admin" || project.student.id === user?.id);
+  const completedDocument = getCompletedDocument(project);
+  const canUploadCompletedDocument = project.status === "completed" && profile?.is_active !== false && canManageProject === true;
 
   return (
     <div className="space-y-6">
@@ -69,6 +75,71 @@ export default async function ProjectDetailPage({
         <StatusBadge status={project.status} />
       </div>
       <ApprovalStatusCard project={project} viewerRole={role} />
+      <section className="rounded border border-slate-200 bg-white p-5 shadow-panel">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h3 className="font-semibold text-slate-950">Final Document</h3>
+            {project.status === "completed" ? (
+              completedDocument ? (
+                <p className="mt-1 text-sm text-emerald-700">Available</p>
+              ) : (
+                <p className="mt-1 text-sm text-amber-700">Pending External Processing</p>
+              )
+            ) : (
+              <p className="mt-1 text-sm text-slate-500">Available after approval completion and external processing.</p>
+            )}
+          </div>
+          {completedDocument ? (
+            <div className="flex gap-2">
+              <Link
+                href={`/api/documents/${completedDocument.latestVersion.id}/download`}
+                className="rounded border border-slate-300 px-3 py-2 text-sm font-semibold"
+              >
+                View
+              </Link>
+              <Link
+                href={`/api/documents/${completedDocument.latestVersion.id}/download`}
+                className="rounded bg-ise-maroon px-3 py-2 text-sm font-semibold text-white"
+              >
+                Download
+              </Link>
+            </div>
+          ) : null}
+        </div>
+        {completedDocument ? (
+          <div className="mt-4 rounded border border-slate-200 bg-slate-50 p-3 text-sm">
+            <p className="font-medium text-slate-900">{completedDocument.latestVersion.originalFileName}</p>
+            <p className="mt-1 text-slate-500">
+              Uploaded: {new Date(completedDocument.latestVersion.uploadedAt).toLocaleString()} · v{completedDocument.latestVersion.versionNumber}
+            </p>
+          </div>
+        ) : project.status === "completed" ? (
+          <p className="mt-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            The approval process is complete. The final document will be available here after external processing is completed.
+          </p>
+        ) : null}
+        {canUploadCompletedDocument ? (
+          <form action={uploadCompletedDocumentAction.bind(null, project.id)} className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
+            <div>
+              <label className="block text-sm font-medium text-slate-700">
+                {completedDocument ? "Upload New Version" : "Upload Completed Document"}
+              </label>
+              <input
+                name="file"
+                type="file"
+                required
+                className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                This document will be provided to the requester as the final completed document.
+              </p>
+            </div>
+            <button className="self-end rounded bg-ise-maroon px-3 py-2 text-sm font-semibold text-white">
+              {completedDocument ? "Upload New Version" : "Upload Completed Document"}
+            </button>
+          </form>
+        ) : null}
+      </section>
       <div className="grid gap-4 lg:grid-cols-3">
         <section className="rounded border border-slate-200 bg-white p-4 shadow-panel lg:col-span-2">
           <h3 className="font-semibold text-slate-950">Project information</h3>
